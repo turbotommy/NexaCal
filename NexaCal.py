@@ -16,7 +16,14 @@ class NexaCalWorker:
     logging.basicConfig(filename='NexaCal.log',level=logging.DEBUG)
     db = sqlite3.connect('nexa.db')
 
-    client_email = '833058523156-8hu2i1aah958skkmtosvud7o970582gr@developer.gserviceaccount.com'
+    #Read config
+    with open("NexaCal.cfg") as f:
+        #Google email account for calendar
+        client_email=f.readline()
+        #calendar id
+        calId=f.readline()
+
+    #The certificate file from google dev
     with open("FlaskProv-9f61f8b38f53.p12") as f:
         private_key = f.read()
 
@@ -70,7 +77,7 @@ class NexaCalWorker:
             start_time = datetime.datetime.fromtimestamp(start_time).strftime("%Y-%m-%dT%H:%M:%S") + tz_offset_str
             end_time = datetime.datetime.fromtimestamp(end_time).strftime("%Y-%m-%dT%H:%M:%S") + tz_offset_str
 
-            if(init==)
+            #if(init==)
             logging.info("Getting calendar events between: " + start_time + " and " + end_time)
 
             # The Calendar API's events().list method returns paginated results, so we
@@ -116,7 +123,6 @@ class NexaCalWorker:
         cursor=db.cursor()
 
       #db = sqlite3.connect('/home/tommy/nexa.db')
-        #request=self.callGoogleCalendar('p42trk1cjoocurlqem8clbb4ao@group.calendar.google.com')
         request=self.callGoogleCalendar('i_78.69.212.216#sunrise@group.v.calendar.google.com')
         #request = self.service.events().list(calendarId='i_78.69.212.216#sunrise@group.v.calendar.google.com',
         #                                         timeMin=u'2015-04-26T20:54:26+0200',
@@ -182,23 +188,13 @@ class NexaCalWorker:
       db.close
 
     def getbookings(self):
-      #db = sqlite3.connect('/home/tommy/nexa.db') 'p42trk1cjoocurlqem8clbb4ao@group.calendar.google.com'
 
       cursor=db.cursor()
 
       try:
 
-        request=self.callGoogleCalendar('p42trk1cjoocurlqem8clbb4ao@group.calendar.google.com')
+        request=self.callGoogleCalendar(calendar)
 
-        #request = self.service.events().list(calendarId='p42trk1cjoocurlqem8clbb4ao@group.calendar.google.com',
-        #                                     timeMin=u'2015-04-14T04:30:00+01:00',
-        #                                     timeMax='2015-04-15T14:00:00',
-        #                                     singleEvents=True)
-        #request = self.service.events().list(calendarId='p42trk1cjoocurlqem8clbb4ao@group.calendar.google.com',
-        #                                     timeMin=u'2015-04-14T04:30:00+01:00',
-        #                                     timeMax=u'2015-04-16T04:30:00+01:00',
-        #                                     singleEvents=True)
-        # Loop until all pages have been processed.
         while request != None:
           # Get the next page.
           response = request.execute()
