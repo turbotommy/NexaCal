@@ -6,6 +6,7 @@ import os
 import time
 import sqlite3
 import logging
+from SchemaPlugins import *
 from oauth2client.client import SignedJwtAssertionCredentials, AccessTokenRefreshError, Error
 from httplib2 import Http
 
@@ -13,15 +14,19 @@ __author__ = 'Tommy Ekh'
 
 class NexaCalWorker:
     global db
+    global calId
+    global syncToken
+
     logging.basicConfig(filename='NexaCal.log',level=logging.DEBUG)
     db = sqlite3.connect('nexa.db')
 
     #Read config
     with open("NexaCal.cfg") as f:
         #Google email account for calendar
-        client_email=f.readline()
+        client_email=f.readline().split('=')[1][:-1]
+
         #calendar id
-        calId=f.readline()
+        calId=f.readline().split('=')[1][:-1]
 
     #The certificate file from google dev
     with open("FlaskProv-9f61f8b38f53.p12") as f:
@@ -68,7 +73,7 @@ class NexaCalWorker:
             # get the next 12 hours of events
             epoch_time = time.time()
             start_time = epoch_time - 3600  # 1 hour ago
-            end_time = epoch_time + 3 * 24 * 3600  # 3 days in the future
+            end_time = epoch_time + 30 * 24 * 3600  # 3 days in the future
             tz_offset = - time.altzone / 3600
             if tz_offset < 0:
                 tz_offset_str = "-%02d00" % abs(tz_offset)
@@ -77,21 +82,36 @@ class NexaCalWorker:
             start_time = datetime.datetime.fromtimestamp(start_time).strftime("%Y-%m-%dT%H:%M:%S") + tz_offset_str
             end_time = datetime.datetime.fromtimestamp(end_time).strftime("%Y-%m-%dT%H:%M:%S") + tz_offset_str
 
-            #if(init==)
-            logging.info("Getting calendar events between: " + start_time + " and " + end_time)
+            if(init==1):
+                logging.info("Getting calendar events between: " + start_time + " and " + end_time)
 
-            # The Calendar API's events().list method returns paginated results, so we
-            # have to execute the request in a paging loop. First, build the
-            # request object. The arguments provided are:
-            #   primary calendar for user
-            request = self.service.events().list(calendarId=calendarId,
-                                                 #timeMin='2015-05-06T04:30:00.000Z',
-                                                 #timeMax='2015-05-15T14:00:00.000Z',
-#                                                 pageToken='EjYKKzVjYzE4YmFuYTM1a3JpdG03dnNvZnNtNjQ4XzIwMTUwOTIyVDE0MDAwMFoYgIDTuIGLyAI=',
-#                                                 orderBy='startTime',
-                                                 maxResults=100,
-                                                 syncToken='CNiij-jEv8UCENiij-jEv8UCGAQ=',
-                                                 singleEvents=True)
+                # The Calendar API's events().list method returns paginated results, so we
+                # have to execute the request in a paging loop. First, build the
+                # request object. The arguments provided are:
+                #   primary calendar for user
+                request = self.service.events().list(calendarId=calendarId,
+                                                     timeMin=start_time,
+                                                     timeMax=end_time,
+    #                                                 pageToken='EjYKKzVjYzE4YmFuYTM1a3JpdG03dnNvZnNtNjQ4XzIwMTUwOTIyVDE0MDAwMFoYgIDTuIGLyAI=',
+                                                     #orderBy='startTime',
+                                                     maxResults=100,
+                                                     singleEvents=True)
+            else:
+                logging.info("Getting updated calendar events")
+
+                # The Calendar API's events().list method returns paginated results, so we
+                # have to execute the request in a paging loop. First, build the
+                # request object. The arguments provided are:
+                #   primary calendar for user
+                request = self.service.events().list(calendarId=calendarId,
+                                                     #timeMin='2015-05-06T04:30:00.000Z',
+                                                     #timeMax='2015-05-15T14:00:00.000Z',
+    #                                                 pageToken='EjYKKzVjYzE4YmFuYTM1a3JpdG03dnNvZnNtNjQ4XzIwMTUwOTIyVDE0MDAwMFoYgIDTuIGLyAI=',
+                                                     orderBy='startTime',
+                                                     maxResults=100,
+                                                     syncToken='CNiij-jEv8UCENiij-jEv8UCGAQ=',
+                                                     singleEvents=True)
+
             #request = self.service.events().list(calendarId=calendarId,
             #                                     timeMin=start_time,
             #                                     timeMax=end_time,
@@ -187,13 +207,13 @@ class NexaCalWorker:
       db.commit()
       db.close
 
-    def getbookings(self):
+    def getbookings(self, init):
 
       cursor=db.cursor()
 
       try:
 
-        request=self.callGoogleCalendar(calendar)
+        request=self.callGoogleCalendar(calId, init)
 
         while request != None:
           # Get the next page.
@@ -212,6 +232,7 @@ class NexaCalWorker:
 
             if(status=='cancelled'):
                 cursor.execute('''DELETE from NexaControl where eventId=?''', (eventId))
+                cursor.execute('''DELETE from NexaPlugins where eventId=?''', (eventId))
             else:
                 summary=event.get('summary', 'Tomt')
 
@@ -222,12 +243,26 @@ class NexaCalWorker:
                 tsto=tsto['dateTime']
 
                 updated=event.get('updated', 'Tomt')
-                cursor.execute('''INSERT OR REPLACE INTO NexaControl(eventId, name, updated, tsfrom, tsto)
-                                  VALUES(?,?,?,?,?)''', (eventId,
-                                                       summary,
-                                                       updated,
-                                                       tsfrom,
-                                                       tsto))
+
+                #Check for plugins in description field
+                descr=event['description']
+                plugins=descr.split('\n')
+                for pluginrow in plugins:
+                    schemaPlugin=SchemaPlugin.SchemaPluginFactory(pluginrow)
+
+                    schemaPlugin.storeInDB(cursor, eventId)
+
+                cursor.execute('''INSERT OR REPLACE INTO NexaControl(eventId, name, updated, tsfrom, tsto, plugin)
+                                  VALUES(?,?,?,?,?,?)''', ( eventId,
+                                                            summary,
+                                                            updated,
+                                                            tsfrom,
+                                                            tsto,
+                                                            descr))
+
+
+
+
             logging.debug(event.get('summary', 'Tomt'))
             logging.debug(event.get('start', 'Tomt'))
             logging.debug(event.get('end', 'Tomt'))
@@ -239,6 +274,7 @@ class NexaCalWorker:
 
         #Store nextSyncToken
         print response['nextSyncToken']
+        cursor.execute('''UPDATE CalConfig SET value=? where key=?''',(response['nextSyncToken'],'nextSyncToken'))
       except Error:
         print Error.message()
         # The AccessTokenRefreshError exception is raised if the credentials
@@ -250,3 +286,20 @@ class NexaCalWorker:
 
       db.commit()
       db.close
+
+    def SunAdjust(self, sunColName,timeStamp, eventRule):
+        cursor=db.cursor()
+        timeStampDB=timeStamp[0:10]+'%'
+
+        dbselect="SELECT {0} FROM suntimes WHERE {0} LIKE ?".format(sunColName)
+
+        #The comma-sign after timeStamp makes it a tuple.
+        cursor.execute(dbselect, (timeStampDB,))
+
+        stats = cursor.fetchone()
+        sunTimeStamp=stats[0]
+        if(eventRule=='Latest' and timeStamp>sunTimeStamp):
+            sunTimeStamp=timeStamp
+        if(eventRule=='Earliest' and timeStamp<sunTimeStamp):
+            sunTimeStamp=timeStamp
+        return sunTimeStamp
