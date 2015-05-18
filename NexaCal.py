@@ -286,20 +286,3 @@ class NexaCalWorker:
 
       db.commit()
       db.close
-
-    def SunAdjust(self, sunColName,timeStamp, eventRule):
-        cursor=db.cursor()
-        timeStampDB=timeStamp[0:10]+'%'
-
-        dbselect="SELECT {0} FROM suntimes WHERE {0} LIKE ?".format(sunColName)
-
-        #The comma-sign after timeStamp makes it a tuple.
-        cursor.execute(dbselect, (timeStampDB,))
-
-        stats = cursor.fetchone()
-        sunTimeStamp=stats[0]
-        if(eventRule=='Latest' and timeStamp>sunTimeStamp):
-            sunTimeStamp=timeStamp
-        if(eventRule=='Earliest' and timeStamp<sunTimeStamp):
-            sunTimeStamp=timeStamp
-        return sunTimeStamp
