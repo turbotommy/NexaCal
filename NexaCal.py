@@ -1,14 +1,11 @@
 from apiclient.discovery import build
 import httplib2
-import datetime
 from dateutil import tz, parser
-import os
 import time
-import sqlite3
 import logging
 from SchemaPlugins import *
 from oauth2client.client import SignedJwtAssertionCredentials, AccessTokenRefreshError, Error
-from httplib2 import Http
+#from httplib2 import Http
 
 __author__ = 'Tommy Ekh'
 
