@@ -1,3 +1,4 @@
+# -*- coding: iso-8859-15 -*-
 from apiclient.discovery import build
 import httplib2
 from dateutil import tz, parser
@@ -14,9 +15,11 @@ class NexaCalWorker:
     global calId
     global syncToken
 
-    logging.basicConfig(filename='NexaCal.log',level=logging.DEBUG)
-    db = sqlite3.connect('nexa.db')
+    syncToken=''
 
+    logging.basicConfig(filename='NexaCal.log',level=logging.DEBUG)
+
+    logging.debug("Läser konfiguration")
     #Read config
     with open("NexaCal.cfg") as f:
         #Google email account for calendar
@@ -64,7 +67,10 @@ class NexaCalWorker:
 
         :rtype : instancemethod
         """
+        global syncToken
+
         request=''
+        db = sqlite3.connect('nexa.db')
 
         try:
             # get the next 12 hours of events
@@ -79,7 +85,7 @@ class NexaCalWorker:
             start_time = datetime.datetime.fromtimestamp(start_time).strftime("%Y-%m-%dT%H:%M:%S") + tz_offset_str
             end_time = datetime.datetime.fromtimestamp(end_time).strftime("%Y-%m-%dT%H:%M:%S") + tz_offset_str
 
-            if(init==1):
+            if(syncToken==''):
                 logging.info("Getting calendar events between: " + start_time + " and " + end_time)
 
                 # The Calendar API's events().list method returns paginated results, so we
@@ -104,9 +110,9 @@ class NexaCalWorker:
                                                      #timeMin='2015-05-06T04:30:00.000Z',
                                                      #timeMax='2015-05-15T14:00:00.000Z',
     #                                                 pageToken='EjYKKzVjYzE4YmFuYTM1a3JpdG03dnNvZnNtNjQ4XzIwMTUwOTIyVDE0MDAwMFoYgIDTuIGLyAI=',
-                                                     orderBy='startTime',
+                                                     #orderBy='startTime',
                                                      maxResults=100,
-                                                     syncToken='CNiij-jEv8UCENiij-jEv8UCGAQ=',
+                                                     syncToken=syncToken,
                                                      singleEvents=True)
 
             #request = self.service.events().list(calendarId=calendarId,
@@ -137,6 +143,8 @@ class NexaCalWorker:
 
     def getsunrisenset(self):
       try:
+        db = sqlite3.connect('nexa.db')
+
         cursor=db.cursor()
 
       #db = sqlite3.connect('/home/tommy/nexa.db')
@@ -205,6 +213,9 @@ class NexaCalWorker:
       db.close
 
     def getbookings(self, init):
+      global syncToken
+
+      db = sqlite3.connect('nexa.db')
 
       cursor=db.cursor()
 
@@ -270,6 +281,7 @@ class NexaCalWorker:
           request = self.service.events().list_next(request, response)
 
         #Store nextSyncToken
+        syncToken=response['nextSyncToken']
         print response['nextSyncToken']
         cursor.execute('''UPDATE CalConfig SET value=? where key=?''',(response['nextSyncToken'],'nextSyncToken'))
       except Error:
@@ -280,6 +292,17 @@ class NexaCalWorker:
                'the application to re-authorize')
 
         print "Hello"
+      except Exception as e:
+          print e
 
       db.commit()
       db.close
+
+    def fireTelldus(self):
+
+        db = sqlite3.connect('nexa.db')
+        cursor=db.cursor()
+
+        cursor.execute("SELECT * FROM ")
+
+        stats = cursor.fetchone()
