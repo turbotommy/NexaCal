@@ -6,6 +6,8 @@ import time
 import logging
 from SchemaPlugins import *
 from oauth2client.client import SignedJwtAssertionCredentials, AccessTokenRefreshError, Error
+import telldusCtrl
+
 #from httplib2 import Http
 
 __author__ = 'Tommy Ekh'
@@ -14,6 +16,9 @@ class NexaCalWorker:
     global db
     global calId
     global syncToken
+    global tzlocal
+    global service
+    global tlds
 
     syncToken=''
 
@@ -28,6 +33,8 @@ class NexaCalWorker:
         #calendar id
         calId=f.readline().split('=')[1][:-1]
 
+    tlds=telldusCtrl.TelldusCtrl()
+
     #The certificate file from google dev
     with open("FlaskProv-9f61f8b38f53.p12") as f:
         private_key = f.read()
@@ -38,7 +45,8 @@ class NexaCalWorker:
     http = httplib2.Http()
     http = credentials.authorize(http)
 
-    service = build(serviceName='calendar', version='v3', http=http)
+    #First get the timezones straight
+    tzlocal=tz.tzlocal()
 
     def login(self):
         """
@@ -68,6 +76,9 @@ class NexaCalWorker:
         :rtype : instancemethod
         """
         global syncToken
+        global service
+
+        service = build(serviceName='calendar', version='v3', http=self.http)
 
         request=''
         db = sqlite3.connect('nexa.db')
@@ -92,7 +103,7 @@ class NexaCalWorker:
                 # have to execute the request in a paging loop. First, build the
                 # request object. The arguments provided are:
                 #   primary calendar for user
-                request = self.service.events().list(calendarId=calendarId,
+                request = service.events().list(calendarId=calendarId,
                                                      timeMin=start_time,
                                                      timeMax=end_time,
     #                                                 pageToken='EjYKKzVjYzE4YmFuYTM1a3JpdG03dnNvZnNtNjQ4XzIwMTUwOTIyVDE0MDAwMFoYgIDTuIGLyAI=',
@@ -106,7 +117,7 @@ class NexaCalWorker:
                 # have to execute the request in a paging loop. First, build the
                 # request object. The arguments provided are:
                 #   primary calendar for user
-                request = self.service.events().list(calendarId=calendarId,
+                request = service.events().list(calendarId=calendarId,
                                                      #timeMin='2015-05-06T04:30:00.000Z',
                                                      #timeMax='2015-05-15T14:00:00.000Z',
     #                                                 pageToken='EjYKKzVjYzE4YmFuYTM1a3JpdG03dnNvZnNtNjQ4XzIwMTUwOTIyVDE0MDAwMFoYgIDTuIGLyAI=',
@@ -153,8 +164,6 @@ class NexaCalWorker:
         #                                         timeMin=u'2015-04-26T20:54:26+0200',
         #                                         timeMax=u'2015-04-27T20:54:26+0200',
         #                                         singleEvents=True)
-        #First get the timezones straight
-        tzlocal=tz.tzlocal()
         tzUTC=tz.gettz('UTC')
 
         # Loop until all pages have been processed.
@@ -214,6 +223,7 @@ class NexaCalWorker:
 
     def getbookings(self, init):
       global syncToken
+      retMsg='Ok'
 
       db = sqlite3.connect('nexa.db')
 
@@ -230,7 +240,7 @@ class NexaCalWorker:
           logging.debug(response)
           # Accessing the response like a dict object with an 'items' key
           # returns a list of item objects (events).
-          print response
+          s=0
           for event in response.get('items'):
             # The event object is a dict object with a 'summary' key.
 
@@ -242,34 +252,40 @@ class NexaCalWorker:
                 cursor.execute('''DELETE from NexaControl where eventId=?''', (eventId))
                 cursor.execute('''DELETE from NexaPlugins where eventId=?''', (eventId))
             else:
-                summary=event.get('summary', 'Tomt')
+                try:
+                    summary=event.get('summary', 'Tomt')
 
-                tsfrom=event.get('start', 'Tomt')
-                tsfrom=tsfrom.get('dateTime') #QUE: What if it is not dateTime?
+                    tsfrom=event.get('start', 'Tomt')
+                    tsfrom=tsfrom.get('dateTime') #QUE: What if it is not dateTime?
+                    tsfrom=parser.parse(tsfrom)
 
-                tsto=event['end']
-                tsto=tsto['dateTime']
+                    tsto=event['end']
+                    tsto=tsto['dateTime']
+                    tsto=parser.parse(tsto)
 
-                updated=event.get('updated', 'Tomt')
+                    updated=event.get('updated', 'Tomt')
 
-                #Check for plugins in description field
-                descr=event['description']
-                plugins=descr.split('\n')
-                for pluginrow in plugins:
-                    schemaPlugin=SchemaPlugin.SchemaPluginFactory(pluginrow)
+                    #Check for plugins in description field
+                    descr=event['description']
+                    plugins=descr.split('\n')
 
-                    schemaPlugin.storeInDB(cursor, eventId)
+                    s=s+1
+                    #print summary + s.__str__()
+                    #if(s==42):
+                        #print("Break" + summary)
+                    for pluginrow in plugins:
+                        schemaPlugin=SchemaPlugin.SchemaPluginFactory(pluginrow)
 
-                cursor.execute('''INSERT OR REPLACE INTO NexaControl(eventId, name, updated, tsfrom, tsto, plugin)
-                                  VALUES(?,?,?,?,?,?)''', ( eventId,
-                                                            summary,
-                                                            updated,
-                                                            tsfrom,
-                                                            tsto,
-                                                            descr))
+                        schemaPlugin.storeInDB(cursor, eventId)
 
+                except KeyError as e:
+                    if (e.message.startswith("description")):
+                        descr=''
+                    else:
+                        retMsg=e.message + " is empty!"
 
-
+                #cursor.execute("INSERT OR REPLACE INTO NexaControl(eventId, name, datetime(updated, 'localtime'), datetime(tsfrom, 'localtime'), datetime(tsto, 'localtime'), plugin) VALUES(?,?,?,?,?,?)", (eventId, summary,updated,tsfrom,tsto,descr))
+                cursor.execute("INSERT OR REPLACE INTO NexaControl(eventId, name, updated, tsfrom, tsto, plugin) VALUES(?,?,?,?,?,?)", (eventId, summary,updated,tsfrom,tsto,descr))
 
             logging.debug(event.get('summary', 'Tomt'))
             logging.debug(event.get('start', 'Tomt'))
@@ -278,7 +294,7 @@ class NexaCalWorker:
             #print repr(event.get('summary', 'NO SUMMARY')) + '\n'
           # Get the next request object by passing the previous request object to
           # the list_next method.
-          request = self.service.events().list_next(request, response)
+          request = service.events().list_next(request, response)
 
         #Store nextSyncToken
         syncToken=response['nextSyncToken']
@@ -291,18 +307,73 @@ class NexaCalWorker:
         print ('The credentials have been revoked or expired, please re-run'
                'the application to re-authorize')
 
-        print "Hello"
-      except Exception as e:
-          print e
 
       db.commit()
       db.close
 
-    def fireTelldus(self):
+      return retMsg
 
+    def fireTelldus(self):
+        retMsg=''
+        devs={}
         db = sqlite3.connect('nexa.db')
+        db.row_factory = sqlite3.Row
         cursor=db.cursor()
 
-        cursor.execute("SELECT * FROM ")
+        cursor.execute("select * from NexaControl "
+                       "where tsfrom <= (SELECT datetime('now','localtime')) "
+                       "and (status is null or status < 980)"
+                       "order by tsfrom")
 
-        stats = cursor.fetchone()
+        events = cursor.fetchall()
+
+        for event in events:
+
+            curtime=datetime.datetime.now(tzlocal)
+            id=event[0]
+            name=event[1]
+            tsfrom=parser.parse(event[3])
+            tsto=parser.parse(event[4])
+
+            #Set to status 979 (ongoing change).
+            par=(979,id)
+            cursor.execute("UPDATE NexaControl SET status=? where eventId=?",par)
+
+            logging.debug("FireTelldus " + name + "-" + tsfrom)
+            #Check for too old events
+            tsdiff=tsto-curtime
+            if(tsdiff.total_seconds()<0.0):
+                devs.update({name:'off'})
+            else:
+                devs.update({name:'on'})
+
+        #Take list of telldus changes and fire them
+        for curDev in devs.items():
+            name=curDev[0]
+            tldev=tlds.devs.get(name)
+            if(tldev==None):
+                retMsg+="\r\nDevice "+curDev[0]+" not found!"
+                par=(980,name)
+                cursor.execute("UPDATE NexaControl SET status=? where name=?",par)
+            else:
+                change=curDev[1]
+                if(change=='off'):
+                    tlds.turn_off(tldev)
+                    par=(1,name)
+                    cursor.execute("UPDATE NexaControl SET status=? where status=979 and name=?",par)
+                if(change=='on'):
+                    tlds.turn_on(tldev)
+
+        cursor.execute("UPDATE NexaControl SET status=1000 where status=979")
+        retMsg+="\r\nUpdated " + str(cursor.rowcount) + " rows"
+        db.commit()
+        db.close()
+
+        return retMsg
+
+#1	DarkLamp	OFF
+#2	EngineHeater	OFF
+#3	NightLamp	OFF
+#4	GarageLamp	OFF
+#5	OutGarage	OFF
+#6	ChildLamps	OFF
