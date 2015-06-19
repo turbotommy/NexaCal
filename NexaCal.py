@@ -2,11 +2,11 @@
 from apiclient.discovery import build
 import httplib2
 from dateutil import tz, parser
+import telldusCtrl
 import time
 import logging
 from SchemaPlugins import *
 from oauth2client.client import SignedJwtAssertionCredentials, AccessTokenRefreshError, Error
-import telldusCtrl
 
 #from httplib2 import Http
 
@@ -266,8 +266,8 @@ class NexaCalWorker:
                     updated=event.get('updated', 'Tomt')
 
                     #Check for plugins in description field
-                    descr=event['description']
-                    plugins=descr.split('\n')
+                    descr=event['location']
+                    plugins=descr.split(';')
 
                     s=s+1
                     #print summary + s.__str__()
@@ -276,7 +276,14 @@ class NexaCalWorker:
                     for pluginrow in plugins:
                         schemaPlugin=SchemaPlugin.SchemaPluginFactory(pluginrow)
 
-                        schemaPlugin.storeInDB(cursor, eventId)
+                        if(schemaPlugin==None):
+                            logging.warning('Cannot handle pluginrow '+pluginrow)
+                        else:
+                            schemaPlugin.storeInDB(cursor, eventId)
+                            if(schemaPlugin.eventType=='On'):
+                                tsfrom=schemaPlugin.calcPluginTime(tsfrom)
+                            elif(schemaPlugin.eventType=='Off'):
+                                tsto=schemaPlugin.calcPluginTime(tsto)
 
                 except KeyError as e:
                     if (e.message.startswith("description")):
@@ -307,6 +314,7 @@ class NexaCalWorker:
         print ('The credentials have been revoked or expired, please re-run'
                'the application to re-authorize')
 
+        db.close()
 
       db.commit()
       db.close
@@ -322,7 +330,7 @@ class NexaCalWorker:
 
         cursor.execute("select * from NexaControl "
                        "where tsfrom <= (SELECT datetime('now','localtime')) "
-                       "and (status is null or status < 980)"
+                       "and (status is null or status between 2 and 980)"
                        "order by tsfrom")
 
         events = cursor.fetchall()
@@ -339,7 +347,7 @@ class NexaCalWorker:
             par=(979,id)
             cursor.execute("UPDATE NexaControl SET status=? where eventId=?",par)
 
-            logging.debug("FireTelldus " + name + "-" + tsfrom)
+            logging.debug("FireTelldus " + name + "-" + str(tsfrom))
             #Check for too old events
             tsdiff=tsto-curtime
             if(tsdiff.total_seconds()<0.0):
@@ -359,10 +367,11 @@ class NexaCalWorker:
                 change=curDev[1]
                 if(change=='off'):
                     tlds.turn_off(tldev)
-                    par=(1,name)
-                    cursor.execute("UPDATE NexaControl SET status=? where status=979 and name=?",par)
+                    par=(2,name)
                 if(change=='on'):
                     tlds.turn_on(tldev)
+                    par=(1,name)
+                cursor.execute("UPDATE NexaControl SET status=? where status=979 and name=?",par)
 
         cursor.execute("UPDATE NexaControl SET status=1000 where status=979")
         retMsg+="\r\nUpdated " + str(cursor.rowcount) + " rows"

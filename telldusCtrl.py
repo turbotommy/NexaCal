@@ -3,7 +3,7 @@
 
 __author__ = 'tommy'
 
-import sys
+#import sys
 import tellcore.telldus as td
 import tellcore.constants as const
 
@@ -42,11 +42,12 @@ class TelldusCtrl:
     devs={}
     isStickPresent=1
 
-    if(isStickPresent==1):
+    try:
         core = td.TelldusCore()
-
-    else:
+    except Exception as e:
+        print e
         core = TelldusFakeCore()
+        isStickPresent=0
 
     cdevs=core.devices()
     for dev in cdevs:

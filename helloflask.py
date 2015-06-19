@@ -1,7 +1,7 @@
 __author__ = 'tommy'
 
-from NexaCal import *
 from flask import Flask
+from NexaCal import *
 
 app = Flask(__name__)
 CalComm=NexaCalWorker()
