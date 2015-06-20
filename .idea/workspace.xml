@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="010203c6-4aa1-4956-8f03-2d1a9193b5b0" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/NexaCal.py" afterPath="$PROJECT_DIR$/NexaCal.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <list id="9bd62104-1d87-427b-82f7-a1d82661fcb1" name="Do Not Push" comment="" />
@@ -467,7 +466,13 @@
       <option name="project" value="LOCAL" />
       <updated>1434820241136</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="More logging in fireTelldus&#10;">
+      <created>1434829977742</created>
+      <option name="number" value="00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1434829977742</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TodoView">
