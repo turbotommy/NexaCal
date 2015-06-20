@@ -344,7 +344,9 @@ class NexaCalWorker:
             name=event[1]
             tsfrom=parser.parse(event[3])
             tsto=parser.parse(event[4])
-            status=parser.parse(event[6])
+            if len(event)>5:
+                status=parser.parse(event[6])
+
             #Set to status 979 (ongoing change).
             par=(979,id)
             cursor.execute("UPDATE NexaControl SET status=? where eventId=?",par)
