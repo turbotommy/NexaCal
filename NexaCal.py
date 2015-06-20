@@ -328,6 +328,8 @@ class NexaCalWorker:
         db.row_factory = sqlite3.Row
         cursor=db.cursor()
 
+        logging.info("FireTelldus "+str(datetime.datetime.now())+", reading schedules")
+
         cursor.execute("select * from NexaControl "
                        "where tsfrom <= (SELECT datetime('now','localtime')) "
                        "and (status is null or status between 2 and 980)"
@@ -342,12 +344,12 @@ class NexaCalWorker:
             name=event[1]
             tsfrom=parser.parse(event[3])
             tsto=parser.parse(event[4])
-
+            status=parser.parse(event[6])
             #Set to status 979 (ongoing change).
             par=(979,id)
             cursor.execute("UPDATE NexaControl SET status=? where eventId=?",par)
 
-            logging.debug("FireTelldus " + name + "-" + str(tsfrom))
+            logging.debug(name + "-" + str(tsfrom))
             #Check for too old events
             tsdiff=tsto-curtime
             if(tsdiff.total_seconds()<0.0):
@@ -361,14 +363,17 @@ class NexaCalWorker:
             tldev=tlds.devs.get(name)
             if(tldev==None):
                 retMsg+="\r\nDevice "+curDev[0]+" not found!"
+                logging.debug(retMsg)
                 par=(980,name)
                 cursor.execute("UPDATE NexaControl SET status=? where name=?",par)
             else:
                 change=curDev[1]
                 if(change=='off'):
+                    logging.debug("Setting "+name+" to off")
                     tlds.turn_off(tldev)
                     par=(2,name)
                 if(change=='on'):
+                    logging.debug("Setting "+name+" to on")
                     tlds.turn_on(tldev)
                     par=(1,name)
                 cursor.execute("UPDATE NexaControl SET status=? where status=979 and name=?",par)
