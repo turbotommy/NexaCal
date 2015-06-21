@@ -344,8 +344,8 @@ class NexaCalWorker:
             name=event[1]
             tsfrom=parser.parse(event[3])
             tsto=parser.parse(event[4])
-            if len(event)>5:
-                status=parser.parse(event[6])
+            if event[6]!=None:
+                status=str(event[6])
 
             #Set to status 979 (ongoing change).
             par=(979,id)
