@@ -48,6 +48,12 @@ class NexaCalWorker:
     #First get the timezones straight
     tzlocal=tz.tzlocal()
 
+    def get_conn(self):
+        db = sqlite3.connect('nexa.db')
+        db.row_factory = sqlite3.Row
+        db.execute('PRAGMA journal_mode=WAL;')
+        return db
+
     def login(self):
         """
 
@@ -154,7 +160,7 @@ class NexaCalWorker:
 
     def getsunrisenset(self):
       try:
-        db = sqlite3.connect('nexa.db')
+        db = self.get_conn()
 
         cursor=db.cursor()
 
@@ -225,7 +231,7 @@ class NexaCalWorker:
       global syncToken
       retMsg='Ok'
 
-      db = sqlite3.connect('nexa.db')
+      db = self.get_conn()
 
       cursor=db.cursor()
 
@@ -336,8 +342,8 @@ class NexaCalWorker:
     def fireTelldus(self):
         retMsg=''
         devs={}
-        db = sqlite3.connect('nexa.db')
-        db.row_factory = sqlite3.Row
+        db = self.get_conn()
+
         cursor=db.cursor()
 
         logging.info("FireTelldus "+str(datetime.datetime.now())+", reading schedules")

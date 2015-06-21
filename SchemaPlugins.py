@@ -142,9 +142,9 @@ class SunTimesPlugin(SchemaPlugin):
 
         stats = self.cursor.fetchone()
         sunTimeStamp=parser.parse(stats[0])
-        if(self.eventRule=='Latest' and sunTimeStamp<orgTimeStamp):
+        if self.eventRule=='Latest' and sunTimeStamp<orgTimeStamp:
             sunTimeStamp=orgTimeStamp
-        if(self.eventRule=='Earliest' and sunTimeStamp<orgTimeStamp):
+        if self.eventRule=='Earliest' and sunTimeStamp>orgTimeStamp:
             sunTimeStamp=orgTimeStamp
         return sunTimeStamp
 
