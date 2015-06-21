@@ -332,7 +332,7 @@ class NexaCalWorker:
 
         cursor.execute("select * from NexaControl "
                        "where tsfrom <= (SELECT datetime('now','localtime')) "
-                       "and (status is null or status between 2 and 980)"
+                       "and (status is null or status in(1, 979, 980))"
                        "order by tsfrom")
 
         events = cursor.fetchall()
@@ -393,3 +393,4 @@ class NexaCalWorker:
 #4	GarageLamp	OFF
 #5	OutGarage	OFF
 #6	ChildLamps	OFF
+#  3 1 * * * /usr/bin/python2.7 /home/pi/NexaCal/main.py >> /tmp/nexa.log 2 >> /tmp/nexa.err
