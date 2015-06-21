@@ -197,7 +197,7 @@ class NexaCalWorker:
                               VALUES(?,?)''', (tsfrom, tsto))
             db.commit()
             logging.info('First user inserted')
-            #print repr(event.get('summary', 'NO SUMMARY')) + '\n'
+          # print repr(event.get('summary', 'NO SUMMARY')) + '\n'
           # Get the next request object by passing the previous request object to
           # the list_next method.
           #select up from suntimes where date(up) = date('now');
@@ -215,11 +215,11 @@ class NexaCalWorker:
 
         print "Hello"
 
-      #except Exception:
-      #  print Exception.message
+      # except Exception:
+      # print Exception.message
 
       db.commit()
-      db.close
+      db.close()
 
     def getbookings(self, init):
       global syncToken
@@ -242,63 +242,65 @@ class NexaCalWorker:
           # returns a list of item objects (events).
           s=0
           for event in response.get('items'):
-            # The event object is a dict object with a 'summary' key.
+              # The event object is a dict object with a 'summary' key.
 
-            # Insert info about event
-            eventId=event['id']
-            status=event['status']
+              # Insert info about event
+              eventId=event['id']
+              status=event['status']
+              schemadescr=''
 
-            if(status=='cancelled'):
-                cursor.execute('''DELETE from NexaControl where eventId=?''', (eventId))
-                cursor.execute('''DELETE from NexaPlugins where eventId=?''', (eventId))
-            else:
-                try:
-                    summary=event.get('summary', 'Tomt')
+              if(status=='cancelled'):
+                  cursor.execute('''DELETE from NexaControl where eventId=?''', (eventId))
+                  cursor.execute('''DELETE from NexaPlugins where eventId=?''', (eventId))
+              else:
+                  try:
+                      summary=event.get('summary', 'Tomt')
 
-                    tsfrom=event.get('start', 'Tomt')
-                    tsfrom=tsfrom.get('dateTime') #QUE: What if it is not dateTime?
-                    tsfrom=parser.parse(tsfrom)
+                      tsfrom=event.get('start', 'Tomt')
+                      tsfrom=tsfrom.get('dateTime') #QUE: What if it is not dateTime?
+                      tsfrom=parser.parse(tsfrom)
 
-                    tsto=event['end']
-                    tsto=tsto['dateTime']
-                    tsto=parser.parse(tsto)
+                      tsto=event['end']
+                      tsto=tsto['dateTime']
+                      tsto=parser.parse(tsto)
 
-                    updated=event.get('updated', 'Tomt')
+                      updated=event.get('updated', 'Tomt')
 
-                    #Check for plugins in description field
-                    descr=event['location']
-                    plugins=descr.split(';')
+                      #Check for plugins in description field
+                      schemadescr=event.get('location')
+                      if schemadescr!=None:
+                          plugins=schemadescr.split(';')
 
-                    s=s+1
-                    #print summary + s.__str__()
-                    #if(s==42):
-                        #print("Break" + summary)
-                    for pluginrow in plugins:
-                        schemaPlugin=SchemaPlugin.SchemaPluginFactory(pluginrow)
+                          s=s+1
+                          #print summary + s.__str__()
+                          #if(s==42):
+                          #print("Break" + summary)
+                          for pluginrow in plugins:
+                              schemaPlugin=SchemaPlugin.SchemaPluginFactory(pluginrow)
 
-                        if(schemaPlugin==None):
-                            logging.warning('Cannot handle pluginrow '+pluginrow)
-                        else:
-                            schemaPlugin.storeInDB(cursor, eventId)
-                            if(schemaPlugin.eventType=='On'):
-                                tsfrom=schemaPlugin.calcPluginTime(tsfrom)
-                            elif(schemaPlugin.eventType=='Off'):
-                                tsto=schemaPlugin.calcPluginTime(tsto)
+                              if(schemaPlugin==None):
+                                  logging.warning('Cannot handle pluginrow '+pluginrow)
+                              else:
+                                  schemaPlugin.storeInDB(cursor, eventId)
+                                  if(schemaPlugin.eventType=='On'):
+                                      tsfrom=schemaPlugin.calcPluginTime(tsfrom)
+                                  elif(schemaPlugin.eventType=='Off'):
+                                      tsto=schemaPlugin.calcPluginTime(tsto)
 
-                except KeyError as e:
-                    if (e.message.startswith("description")):
-                        descr=''
-                    else:
-                        retMsg=e.message + " is empty!"
+                  except KeyError as e:
+                      if (e.message.startswith("description")):
+                          schemadescr=''
+                      else:
+                          retMsg=e.message + " is empty!"
 
-                #cursor.execute("INSERT OR REPLACE INTO NexaControl(eventId, name, datetime(updated, 'localtime'), datetime(tsfrom, 'localtime'), datetime(tsto, 'localtime'), plugin) VALUES(?,?,?,?,?,?)", (eventId, summary,updated,tsfrom,tsto,descr))
-                cursor.execute("INSERT OR REPLACE INTO NexaControl(eventId, name, updated, tsfrom, tsto, plugin) VALUES(?,?,?,?,?,?)", (eventId, summary,updated,tsfrom,tsto,descr))
+                  #cursor.execute("INSERT OR REPLACE INTO NexaControl(eventId, name, datetime(updated, 'localtime'), datetime(tsfrom, 'localtime'), datetime(tsto, 'localtime'), plugin) VALUES(?,?,?,?,?,?)", (eventId, summary,updated,tsfrom,tsto,schemadescr))
+                  cursor.execute("INSERT OR REPLACE INTO NexaControl(eventId, name, updated, tsfrom, tsto, plugin) VALUES(?,?,?,?,?,?)", (eventId, summary,updated,tsfrom,tsto,schemadescr))
 
-            logging.debug(event.get('summary', 'Tomt'))
-            logging.debug(event.get('start', 'Tomt'))
-            logging.debug(event.get('end', 'Tomt'))
-            logging.debug(event.get('updated', 'Tomt'))
-            #print repr(event.get('summary', 'NO SUMMARY')) + '\n'
+              logging.debug(event.get('summary', 'Tomt'))
+              logging.debug(event.get('start', 'Tomt'))
+              logging.debug(event.get('end', 'Tomt'))
+              logging.debug(event.get('updated', 'Tomt'))
+              #print repr(event.get('summary', 'NO SUMMARY')) + '\n'
           # Get the next request object by passing the previous request object to
           # the list_next method.
           request = service.events().list_next(request, response)
