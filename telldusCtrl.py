@@ -57,9 +57,9 @@ class TelldusCtrl:
         name=dev.name
         try:
             if(dev.last_sent_command(-1)==const.TELLSTICK_TURNON):
-                print name + " redan påslagen"
+                print name + " already on"
             else:
-                print "Slår på " +name+ ", id="+str(dev.id)
+                print "Turns on " +name+ ", id="+str(dev.id)
                 dev.turn_on()
         except td.TelldusError as e:
             print e
@@ -69,9 +69,9 @@ class TelldusCtrl:
         name=dev.name
         try:
             if(dev.last_sent_command(-1)==const.TELLSTICK_TURNOFF):
-                print name + " redan avslagen"
+                print name + " already off"
             else:
-                print "Slår av " +name+ ", id="+str(dev.id)
+                print "Turns off " +name+ ", id="+str(dev.id)
                 dev.turn_off()
         except td.TelldusError as e:
             print e

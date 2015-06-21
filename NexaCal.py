@@ -327,6 +327,7 @@ class NexaCalWorker:
 
         db.close()
 
+
       db.commit()
       db.close()
 
