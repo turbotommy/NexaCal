@@ -309,8 +309,8 @@ class NexaCalWorker:
         syncToken=response['nextSyncToken']
         print response['nextSyncToken']
         cursor.execute('''UPDATE CalConfig SET value=? where key=?''',(response['nextSyncToken'],'nextSyncToken'))
-      except Error:
-        logging.error(Error.message())
+      except Error as e:
+        logging.error(e.message)
         # The AccessTokenRefreshError exception is raised if the credentials
         # have been revoked by the user or they have expired.
         print ('The credentials have been revoked or expired, please re-run'

@@ -28,8 +28,8 @@
       <file leaf-file-name="NexaCal.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/NexaCal.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.42929292">
-              <caret line="313" column="37" selection-start-line="313" selection-start-column="37" selection-end-line="313" selection-end-column="37" />
+            <state vertical-scroll-proportion="0.530303">
+              <caret line="317" column="8" selection-start-line="317" selection-start-column="8" selection-end-line="317" selection-end-column="8" />
               <folding>
                 <element signature="e#30#67#0" expanded="true" />
               </folding>
@@ -516,7 +516,13 @@
       <option name="project" value="LOCAL" />
       <updated>1434876158730</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="More error handling">
+      <created>1434876816836</created>
+      <option name="number" value="00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1434876816836</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="TodoView">
@@ -577,7 +583,8 @@
     <MESSAGE value="Select now does not include status 2 (off)" />
     <MESSAGE value="scheduledplugins can be null" />
     <MESSAGE value="Changed to se charset" />
-    <option name="LAST_COMMIT_MESSAGE" value="Changed to se charset" />
+    <MESSAGE value="More error handling" />
+    <option name="LAST_COMMIT_MESSAGE" value="More error handling" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -1068,8 +1075,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/NexaCal.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.42929292">
-          <caret line="313" column="37" selection-start-line="313" selection-start-column="37" selection-end-line="313" selection-end-column="37" />
+        <state vertical-scroll-proportion="0.530303">
+          <caret line="317" column="8" selection-start-line="317" selection-start-column="8" selection-end-line="317" selection-end-column="8" />
           <folding>
             <element signature="e#30#67#0" expanded="true" />
           </folding>
