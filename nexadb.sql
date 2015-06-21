@@ -7,3 +7,5 @@ CREATE TABLE NexaControl (eventId TEXT not null, name TEXT, updated DATETIME not
 CREATE UNIQUE INDEX pki_NexaControl on NexaControl (eventId asc);
 CREATE INDEX i_NexaControl_2 on NexaControl (status, tsfrom asc);
 CREATE TABLE NexaPlugins (eventId TEXT not null, name TEXT, updated DATETIME not null, eventType TEXT, eventRule TEXT);
+
+select * from NexaControl where tsfrom <= (SELECT datetime('now','localtime')) and (status is null or status in(1, 979, 980)) order by tsfrom;
