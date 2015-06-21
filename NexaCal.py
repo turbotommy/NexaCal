@@ -250,8 +250,8 @@ class NexaCalWorker:
               schemadescr=''
 
               if(status=='cancelled'):
-                  cursor.execute('''DELETE from NexaControl where eventId=?''', (eventId))
                   cursor.execute('''DELETE from NexaPlugins where eventId=?''', (eventId))
+                  cursor.execute('''DELETE from NexaControl where eventId=?''', (eventId))
               else:
                   try:
                       summary=event.get('summary', 'Tomt')
@@ -292,9 +292,17 @@ class NexaCalWorker:
                           schemadescr=''
                       else:
                           retMsg=e.message + " is empty!"
-
-                  #cursor.execute("INSERT OR REPLACE INTO NexaControl(eventId, name, datetime(updated, 'localtime'), datetime(tsfrom, 'localtime'), datetime(tsto, 'localtime'), plugin) VALUES(?,?,?,?,?,?)", (eventId, summary,updated,tsfrom,tsto,schemadescr))
-                  cursor.execute("INSERT OR REPLACE INTO NexaControl(eventId, name, updated, tsfrom, tsto, plugin) VALUES(?,?,?,?,?,?)", (eventId, summary,updated,tsfrom,tsto,schemadescr))
+                  for x in range(0, 10):
+                      try:
+                          cursor.execute("INSERT OR REPLACE INTO NexaControl(eventId, name, updated, tsfrom, tsto, plugin) VALUES(?,?,?,?,?,?)", (eventId, summary,updated,tsfrom,tsto,schemadescr))
+                      except Exception as e:
+                          logging.warning("Could not insert into NexaControl:" +e.message+ ", retry "+str(10-x))
+                          time.sleep(1)
+                          pass
+                      finally:
+                          break
+                  else:
+                      cursor.execute("INSERT OR REPLACE INTO NexaControl(eventId, name, updated, tsfrom, tsto, plugin) VALUES(?,?,?,?,?,?)", (eventId, summary,updated,tsfrom,tsto,schemadescr))
 
               logging.debug(event.get('summary', 'Tomt'))
               logging.debug(event.get('start', 'Tomt'))
@@ -308,9 +316,10 @@ class NexaCalWorker:
         #Store nextSyncToken
         syncToken=response['nextSyncToken']
         print response['nextSyncToken']
+
         cursor.execute('''UPDATE CalConfig SET value=? where key=?''',(response['nextSyncToken'],'nextSyncToken'))
-      except Error as e:
-        logging.error(e.message)
+      except Exception as e:
+        logging.error("DB error:" + e.message)
         # The AccessTokenRefreshError exception is raised if the credentials
         # have been revoked by the user or they have expired.
         print ('The credentials have been revoked or expired, please re-run'
@@ -319,7 +328,7 @@ class NexaCalWorker:
         db.close()
 
       db.commit()
-      db.close
+      db.close()
 
       return retMsg
 
