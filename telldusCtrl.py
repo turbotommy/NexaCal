@@ -1,5 +1,5 @@
 #!/usr/local/bin/python
-# -*- coding: utf-8 -*-
+# -*- coding: iso-8859-15 -*-
 
 __author__ = 'tommy'
 
@@ -57,9 +57,9 @@ class TelldusCtrl:
         name=dev.name
         try:
             if(dev.last_sent_command(-1)==const.TELLSTICK_TURNON):
-                print name + " redan p√•slagen"
+                print name + " redan pÂslagen"
             else:
-                print "Sl√•r p√• " +name+ ", id="+str(dev.id)
+                print "SlÂr pÂ " +name+ ", id="+str(dev.id)
                 dev.turn_on()
         except td.TelldusError as e:
             print e
@@ -71,7 +71,7 @@ class TelldusCtrl:
             if(dev.last_sent_command(-1)==const.TELLSTICK_TURNOFF):
                 print name + " redan avslagen"
             else:
-                print "Sl√•r av " +name+ ", id="+str(dev.id)
+                print "SlÂr av " +name+ ", id="+str(dev.id)
                 dev.turn_off()
         except td.TelldusError as e:
             print e
@@ -90,7 +90,7 @@ class TelldusCtrl:
             print device.parameters()
             print device.protocol
 
-        #    dev2=devices['Motorv√§armare']
+        #    dev2=devices['Motorv‰armare']
         #    print dev2.name
 
         except td.TelldusError as e:
