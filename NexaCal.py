@@ -255,9 +255,12 @@ class NexaCalWorker:
               status=event['status']
               schemadescr=''
 
+              if eventId == u'74c6v4i5ckc854ik5u6fg79ikk_20161231T200000Z':
+                  print 'TODO Found!'
               if(status=='cancelled'):
-                  cursor.execute('''DELETE from NexaPlugins where eventId=?''', (eventId))
-                  cursor.execute('''DELETE from NexaControl where eventId=?''', (eventId))
+                  par=(eventId,)
+                  cursor.execute("DELETE from NexaPlugins where eventId=?", par)
+                  cursor.execute('''DELETE from NexaControl where eventId=?''', par)
               else:
                   try:
                       summary=event.get('summary', 'Tomt')
@@ -279,8 +282,8 @@ class NexaCalWorker:
 
                           s=s+1
                           #print summary + s.__str__()
-                          #if(s==42):
-                          #print("Break" + summary)
+                          if(s==70):
+                            print("Break" + summary)
                           for pluginrow in plugins:
                               schemaPlugin=SchemaPlugin.SchemaPluginFactory(pluginrow)
 
@@ -328,10 +331,10 @@ class NexaCalWorker:
         logging.error("DB error:" + e.message)
         # The AccessTokenRefreshError exception is raised if the credentials
         # have been revoked by the user or they have expired.
-        print ('The credentials have been revoked or expired, please re-run'
-               'the application to re-authorize')
+        #print ('The credentials have been revoked or expired, please re-run'
+        #       'the application to re-authorize')
 
-        db.close()
+#        db.close()
 
 
       db.commit()
