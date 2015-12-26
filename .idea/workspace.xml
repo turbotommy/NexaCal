@@ -2,11 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="010203c6-4aa1-4956-8f03-2d1a9193b5b0" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/logging.conf" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/NexaCal.py" afterPath="$PROJECT_DIR$/NexaCal.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/helloflask.py" afterPath="$PROJECT_DIR$/helloflask.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/telldusCtrl.py" afterPath="$PROJECT_DIR$/telldusCtrl.py" />
     </list>
     <list id="9bd62104-1d87-427b-82f7-a1d82661fcb1" name="Do Not Push" comment="" />
     <ignored path="NexaCal.iws" />
@@ -609,7 +605,13 @@
       <option name="project" value="LOCAL" />
       <updated>1451111989223</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="Added Web functionality">
+      <created>1451129181362</created>
+      <option name="number" value="00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1451129181362</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="TodoView">
