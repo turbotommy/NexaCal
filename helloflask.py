@@ -5,17 +5,24 @@ __author__ = 'tommy'
 
 from flask import Flask
 from flask import request, current_app
+import logging
+import logging.config
+
+logging.config.fileConfig('logging.conf')
+#logging.basicConfig(filename='NexaCal.log',level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+#handler = logger.handlers.pop()
+#logger.addHandler(handler)
+
+logger.info("Starting flaskd")
 from NexaCal import *
 
 app = Flask(__name__)
 CalComm=NexaCalWorker()
-logger = logging.getLogger('werkzeug')
-handler = logging.FileHandler('access.log')
-logger.addHandler(handler)
 
 # Also add the handler to Flask's logger for cases
 #  where Werkzeug isn't used as the underlying WSGI server.
-app.logger.addHandler(handler)
+#app.logger.addHandler()
 
 @app.route('/')
 def index():
@@ -74,7 +81,7 @@ def test():
 def log_request():
 
     if current_app.config.get('LOG_REQUESTS'):
-        current_app.logger.debug('whatever')
+        logger.debug('whatever')
         # Or if you dont want to use a logger, implement
         # whatever system you prefer here
         # print request.headers

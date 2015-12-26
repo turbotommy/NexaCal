@@ -19,12 +19,16 @@ class NexaCalWorker:
     global tzlocal
     global service
     global tlds
+    global logger
 
     syncToken=''
 
-    logging.basicConfig(filename='NexaCal.log',level=logging.DEBUG)
+    logging.config.fileConfig('logging.conf')
+    #logging.basicConfig(filename='NexaCal.log',level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
 
-    logging.debug("Läser konfiguration")
+
+    logger.debug("Reads Config")
     #Read config
     with open("NexaCal.cfg") as f:
         #Google email account for calendar
@@ -47,6 +51,8 @@ class NexaCalWorker:
 
     #First get the timezones straight
     tzlocal=tz.tzlocal()
+
+    logger.info("Init ready")
 
     def get_conn(self):
         db = sqlite3.connect('nexa.db')
@@ -103,7 +109,7 @@ class NexaCalWorker:
             end_time = datetime.datetime.fromtimestamp(end_time).strftime("%Y-%m-%dT%H:%M:%S") + tz_offset_str
 
             if(syncToken==''):
-                logging.info("Getting calendar events between: " + start_time + " and " + end_time)
+                logger.info("Getting calendar events between: " + start_time + " and " + end_time)
 
                 # The Calendar API's events().list method returns paginated results, so we
                 # have to execute the request in a paging loop. First, build the
@@ -117,7 +123,7 @@ class NexaCalWorker:
                                                      maxResults=100,
                                                      singleEvents=True)
             else:
-                logging.info("Getting updated calendar events")
+                logger.info("Getting updated calendar events")
 
                 # The Calendar API's events().list method returns paginated results, so we
                 # have to execute the request in a paging loop. First, build the
@@ -138,7 +144,7 @@ class NexaCalWorker:
                                                  #updatedMin='2015-05-08T00:00:00.000Z',
             #                                     singleEvents=True)
         except Error:
-            print Error.message()
+            logger.error(Error.message())
             # The AccessTokenRefreshError exception is raised if the credentials
             # have been revoked by the user or they have expired.
             print ('The credentials have been revoked or expired, please re-run'
@@ -178,8 +184,8 @@ class NexaCalWorker:
           response = request.execute()
           # Accessing the response like a dict object with an 'items' key
           # returns a list of item objects (events).
-          logging.debug("Response: ")
-          logging.debug(response)
+          logger.debug("Response: ")
+          logger.debug(response)
           for event in response.get('items'):
             # The event object is a dict object with a 'summary' key.
 
@@ -188,7 +194,7 @@ class NexaCalWorker:
             sunDate=event.get('start', 'Tomt')
             sunDate=sunDate.get('date')+' '
 
-            logging.info(summary)
+            logger.info(summary)
             tmpList=summary.split(",")
 
             tsfrom=parser.parse(sunDate+tmpList[0][-7:])
@@ -202,7 +208,7 @@ class NexaCalWorker:
             rc=cursor.execute('''INSERT INTO suntimes(up, down)
                               VALUES(?,?)''', (tsfrom, tsto))
             db.commit()
-            logging.info('First user inserted')
+            logger.info('First user inserted')
           # print repr(event.get('summary', 'NO SUMMARY')) + '\n'
           # Get the next request object by passing the previous request object to
           # the list_next method.
@@ -211,7 +217,7 @@ class NexaCalWorker:
 
       except sqlite3.IntegrityError as sqlIE:
         #print "I/O error({0}): {1}".format(e.errno, e.strerror)
-        logging.debug(sqlIE.message)
+        logger.debug(sqlIE.message)
       except Error:
         print Error.message()
         # The AccessTokenRefreshError exception is raised if the credentials
@@ -242,8 +248,8 @@ class NexaCalWorker:
         while request != None:
           # Get the next page.
           response = request.execute()
-          logging.debug("Calresponse:")
-          logging.debug(response)
+          logger.debug("Calresponse:")
+          logger.debug(response)
           # Accessing the response like a dict object with an 'items' key
           # returns a list of item objects (events).
           s=0
@@ -288,7 +294,7 @@ class NexaCalWorker:
                               schemaPlugin=SchemaPlugin.SchemaPluginFactory(pluginrow)
 
                               if(schemaPlugin==None):
-                                  logging.warning('Cannot handle pluginrow '+pluginrow)
+                                  logger.warning('Cannot handle pluginrow '+pluginrow)
                               else:
                                   schemaPlugin.storeInDB(cursor, eventId)
                                   if(schemaPlugin.eventType=='On'):
@@ -305,7 +311,7 @@ class NexaCalWorker:
                       try:
                           cursor.execute("INSERT OR REPLACE INTO NexaControl(eventId, name, updated, tsfrom, tsto, plugin) VALUES(?,?,?,?,?,?)", (eventId, summary,updated,tsfrom,tsto,schemadescr))
                       except Exception as e:
-                          logging.warning("Could not insert into NexaControl:" +e.message+ ", retry "+str(10-x))
+                          logger.warning("Could not insert into NexaControl:" +e.message+ ", retry "+str(10-x))
                           time.sleep(1)
                           pass
                       finally:
@@ -313,10 +319,10 @@ class NexaCalWorker:
                   else:
                       cursor.execute("INSERT OR REPLACE INTO NexaControl(eventId, name, updated, tsfrom, tsto, plugin) VALUES(?,?,?,?,?,?)", (eventId, summary,updated,tsfrom,tsto,schemadescr))
 
-              logging.debug(event.get('summary', 'Tomt'))
-              logging.debug(event.get('start', 'Tomt'))
-              logging.debug(event.get('end', 'Tomt'))
-              logging.debug(event.get('updated', 'Tomt'))
+              logger.debug(event.get('summary', 'Tomt'))
+              logger.debug(event.get('start', 'Tomt'))
+              logger.debug(event.get('end', 'Tomt'))
+              logger.debug(event.get('updated', 'Tomt'))
               #print repr(event.get('summary', 'NO SUMMARY')) + '\n'
           # Get the next request object by passing the previous request object to
           # the list_next method.
@@ -328,7 +334,7 @@ class NexaCalWorker:
 
         cursor.execute('''UPDATE CalConfig SET value=? where key=?''',(response['nextSyncToken'],'nextSyncToken'))
       except Exception as e:
-        logging.error("Error:" + e.message)
+        logger.error(e.message)
         # The AccessTokenRefreshError exception is raised if the credentials
         # have been revoked by the user or they have expired.
         #print ('The credentials have been revoked or expired, please re-run'
@@ -349,7 +355,7 @@ class NexaCalWorker:
 
         cursor=db.cursor()
 
-        logging.info("FireTelldus "+str(datetime.datetime.now())+", reading schedules")
+        logger.info("Reading schedules")
 
         cursor.execute("select * from NexaControl "
                        "where tsfrom <= (SELECT datetime('now','localtime')) "
@@ -372,7 +378,7 @@ class NexaCalWorker:
             par=(979,id)
             cursor.execute("UPDATE NexaControl SET status=? where eventId=?",par)
 
-            logging.debug(name + "-" + str(tsfrom))
+            logger.debug(name + "-" + str(tsfrom))
             #Check for too old events
             tsdiff=tsto-curtime
             if(tsdiff.total_seconds()<0.0):
@@ -386,17 +392,17 @@ class NexaCalWorker:
             tldev=tlds.devs.get(name)
             if(tldev==None):
                 retMsg+="\r\nDevice "+curDev[0]+" not found!"
-                logging.debug(retMsg)
+                logger.debug(retMsg)
                 par=(980,name)
                 cursor.execute("UPDATE NexaControl SET status=? where name=?",par)
             else:
                 change=curDev[1]
                 if(change=='off'):
-                    logging.debug("Setting "+name+" to off")
+                    logger.debug("Setting "+name+" to off")
                     tlds.turn_off(tldev)
                     par=(2,name)
                 if(change=='on'):
-                    logging.debug("Setting "+name+" to on")
+                    logger.debug("Setting "+name+" to on")
                     tlds.turn_on(tldev)
                     par=(1,name)
                 cursor.execute("UPDATE NexaControl SET status=? where status=979 and name=?",par)
