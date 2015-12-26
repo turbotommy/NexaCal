@@ -9,3 +9,6 @@ CREATE INDEX i_NexaControl_2 on NexaControl (status, tsfrom asc);
 CREATE TABLE NexaPlugins (eventId TEXT not null, name TEXT, updated DATETIME not null, eventType TEXT, eventRule TEXT);
 
 select * from NexaControl where tsfrom <= (SELECT datetime('now','localtime')) and (status is null or status in(1, 979, 980)) order by tsfrom;
+
+delete from NexaPlugins where eventid in (select eventid from NexaControl where tsfrom < '2015-07-20');
+delete from NexaControl where tsfrom < '2015-07-20'

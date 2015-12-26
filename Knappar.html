@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Misteln13</title>
+	<link rel="stylesheet" href="https://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.css" />
+	<script src="https://code.jquery.com/jquery-2.0.3.min.js"></script>
+	<script src="https://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.js"></script>
+	<script type="text/javascript">
+	$(document).ready(function(){
+		//Starta saker
+		$('.lampknapp').click(function(){
+			toggleLampa(this);
+		});
+	});
+	function toggleLampa(lampa){
+		var addr='http://192.168.222.60:8080';
+		addr += '/'+$(lampa).attr('value');
+		addr += '/'+$(lampa).attr('id');
+		$.get(addr, function(response){
+			alert(response);
+		});
+	}
+	</script>
+</head>
+<body>
+<div width="50%" class="content" data-role="content">
+	<h2 width="50%">
+        <button class="lampknapp" id="1" value="off" height="80%">F�nsterlampor av</button>
+		<button width="40%" class="lampknapp" id="1" value="on">F�nsterlampor p�</button>
+	</h2>
+	<h2 width="50%">
+        <button class="lampknapp" id="2" value="off">Motorv�rmare av</button><button class="lampknapp" id="2" value="on">Motorv�rmare p�</button>
+	</h2>
+	<h2 width="50%">
+        <button class="lampknapp" id="3" value="off">Barnlampor av</button><button class="lampknapp" id="3" value="on">Barnlampor p�</button>
+	</h2>
+	<h2 width="50%">
+		<button class="lampknapp" id="5" value="off">Garage av</button><button class="lampknapp" id="5" value="on">Garage p�</button>
+	</h2>
+</div>
+</body>
