@@ -8,6 +8,10 @@ import tellcore.telldus as td
 import tellcore.constants as const
 import logging
 
+logging.config.fileConfig('logging.conf')
+#logging.basicConfig(filename='NexaCal.log',level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
 class Device:
     name='N/A'
     id=999
@@ -39,14 +43,13 @@ class TelldusFakeCore:
 class TelldusCtrl:
     global core
     global isStickPresent
-    global logger
 
     devs={}
     isStickPresent=1
 
-    logging.config.fileConfig('logging.conf')
+#    logging.config.fileConfig('logging.conf')
     #logging.basicConfig(filename='NexaCal.log',level=logging.DEBUG)
-    logger = logging.getLogger(__name__)
+#    logger = logging.getLogger(__name__)
 
 #    logging.basicConfig(filename='tellduswrapper.log',level=logging.DEBUG)
 #    logger = logging.getLogger('werkzeug')

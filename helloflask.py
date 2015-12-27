@@ -7,6 +7,7 @@ from flask import Flask
 from flask import request, current_app
 import logging
 import logging.config
+import socket
 
 logging.config.fileConfig('logging.conf')
 #logging.basicConfig(filename='NexaCal.log',level=logging.DEBUG)
@@ -14,10 +15,15 @@ logger = logging.getLogger(__name__)
 #handler = logger.handlers.pop()
 #logger.addHandler(handler)
 
-logger.info("Starting flaskd")
+app = Flask(__name__)
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect(("8.8.8.8",80)) #Google's DNS
+myip=s.getsockname()[0]
+s.close()
+
+logger.info("Starting flaskd, baseaddr " + myip)
 from NexaCal import *
 
-app = Flask(__name__)
 CalComm=NexaCalWorker()
 
 # Also add the handler to Flask's logger for cases
@@ -43,7 +49,7 @@ def index():
         function toggleLampa(lampa){
             //var addr='http://192.168.222.60:5000';
             var addr='http://127.0.0.1:5000';
-            var addr='http://192.168.222.43:5000';
+            var addr='http://''' + myip +''':5000';
             addr += '/'+$(lampa).attr('value');
             addr += '/'+$(lampa).attr('id');
             $.get(addr, function(response){
@@ -61,7 +67,7 @@ def index():
             <button width="40%" class="lampknapp" id="1" value="on">Fönsterlampor på</button>
         </h2>
         <h2 width="50%">
-            <button class="lampknapp" id="2" value="off">Motorv%C3%A4rmare av</button><button class="lampknapp" id="2" value="on">Motorv%C3%A4rmare på</button>
+            <button class="lampknapp" id="2" value="off">Motorärmare av</button><button class="lampknapp" id="2" value="on">Motorv%C3%A4rmare på</button>
         </h2>
         <h2 width="50%">
             <button class="lampknapp" id="3" value="off">Barnlampor av</button><button class="lampknapp" id="3" value="on">Barnlampor på</button>
@@ -72,7 +78,6 @@ def index():
     </div>
     </body>
     '''
-
 @app.route('/test')
 def test():
     return '''Cool'''
@@ -91,9 +96,10 @@ def log_request():
 def on():
     return '''Switching on'''
 
-@app.route('/off')
-def off():
-    return '''Switching off'''
+@app.route('/off/<nexa_id>')
+def off(nexa_id):
+
+    return 'Switching off %s' % nexa_id
 
 @app.route('/init')
 def init():
@@ -119,3 +125,4 @@ def fireTelldus():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
+

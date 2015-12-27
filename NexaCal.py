@@ -10,6 +10,11 @@ from oauth2client.client import SignedJwtAssertionCredentials, AccessTokenRefres
 
 #from httplib2 import Http
 
+logging.config.fileConfig('logging.conf')
+#logging.basicConfig(filename='NexaCal.log',level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+
 __author__ = 'Tommy Ekh'
 
 class NexaCalWorker:
@@ -22,10 +27,6 @@ class NexaCalWorker:
     global logger
 
     syncToken=''
-
-    logging.config.fileConfig('logging.conf')
-    #logging.basicConfig(filename='NexaCal.log',level=logging.DEBUG)
-    logger = logging.getLogger(__name__)
 
 
     logger.debug("Reads Config")
@@ -365,7 +366,7 @@ class NexaCalWorker:
         events = cursor.fetchall()
 
         for event in events:
-
+            status=0
             curtime=datetime.datetime.now(tzlocal)
             id=event[0]
             name=event[1]
@@ -378,13 +379,14 @@ class NexaCalWorker:
             par=(979,id)
             cursor.execute("UPDATE NexaControl SET status=? where eventId=?",par)
 
-            logger.debug(name + "-" + str(tsfrom))
+            logger.debug(name + ": " + str(tsfrom) + " - " + str(tsto))
             #Check for too old events
             tsdiff=tsto-curtime
             if(tsdiff.total_seconds()<0.0):
                 devs.update({name:'off'})
             else:
-                devs.update({name:'on'})
+                if status==0:
+                    devs.update({name:'on'})
 
         #Take list of telldus changes and fire them
         for curDev in devs.items():
