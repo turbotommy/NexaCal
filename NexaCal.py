@@ -289,8 +289,8 @@ class NexaCalWorker:
 
                           s=s+1
                           #print summary + s.__str__()
-                          if(s==70):
-                            print("Break" + summary)
+#                          if(s==70):
+#                            print("Break" + summary)
                           for pluginrow in plugins:
                               schemaPlugin=SchemaPlugin.SchemaPluginFactory(pluginrow)
 
@@ -409,8 +409,9 @@ class NexaCalWorker:
                     par=(1,name)
                 cursor.execute("UPDATE NexaControl SET status=? where status=979 and name=?",par)
 
-        cursor.execute("UPDATE NexaControl SET status=1000 where status=979")
+        #cursor.execute("UPDATE NexaControl SET status=1000 where status=979")
         retMsg+="\r\nUpdated " + str(cursor.rowcount) + " rows"
+        logger.debug(retMsg + ", updates to 1000")
         db.commit()
         db.close()
 

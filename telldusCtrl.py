@@ -8,11 +8,13 @@ import tellcore.telldus as td
 import tellcore.constants as const
 import logging
 
-logging.config.fileConfig('logging.conf')
-#logging.basicConfig(filename='NexaCal.log',level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
 class Device:
+    global logger
+
+    #logging.basicConfig(filename='NexaCal.log',level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+    logger.debug("Initializing device")
+
     name='N/A'
     id=999
     state='off'
@@ -36,6 +38,11 @@ class Device:
 class TelldusFakeCore:
     test=0
 
+#    logging.config.fileConfig('logging.conf')
+    #logging.basicConfig(filename='NexaCal.log',level=logging.DEBUG)
+#    logger = logging.getLogger(__name__)
+    logger.debug("Initializing fake core")
+
     def devices(self):
         return {Device(1,'DarkLamp'),Device(2,'NightLamp'),Device(3,'ChildLamps'),Device(4,'EngineHeater')}
 
@@ -43,19 +50,20 @@ class TelldusFakeCore:
 class TelldusCtrl:
     global core
     global isStickPresent
+#    global logger
 
     devs={}
     isStickPresent=1
 
 #    logging.config.fileConfig('logging.conf')
     #logging.basicConfig(filename='NexaCal.log',level=logging.DEBUG)
-#    logger = logging.getLogger(__name__)
+    logger = logging.getLogger(__name__)
+    logger.info("Starting tellduswrapper")
 
 #    logging.basicConfig(filename='tellduswrapper.log',level=logging.DEBUG)
 #    logger = logging.getLogger('werkzeug')
 
     try:
-        logger.info("Starting tellduswrapper")
         core = td.TelldusCore()
     except Exception as e:
         logger.warning(e.message)
@@ -77,7 +85,6 @@ class TelldusCtrl:
         except td.TelldusError as e:
             logger.error(e)
 
-
     def turn_off(self, dev):
         name=dev.name
         try:
@@ -88,7 +95,6 @@ class TelldusCtrl:
                 dev.turn_off()
         except td.TelldusError as e:
             logger.error(e)
-
 
     def notused(self):
         try:
@@ -111,4 +117,3 @@ class TelldusCtrl:
             logger.error(e)
             logger.error(e.message)
             logger.error(e.error)
-
