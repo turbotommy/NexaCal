@@ -1,5 +1,5 @@
 #!/usr/local/bin/python
-# -*- coding: iso-8859-15 -*-
+# -*- coding: UTF-8 -*-
 
 __author__ = 'tommy'
 
@@ -9,7 +9,7 @@ import logging
 import logging.config
 import socket
 
-logging.config.fileConfig('logging.conf')
+logging.config.fileConfig('logging.conf', disable_existing_loggers=False)
 #logging.basicConfig(filename='NexaCal.log',level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 #handler = logger.handlers.pop()
@@ -63,17 +63,17 @@ def index():
     <h1 width="50%">Kontrollpanel</h1>
     <div width="50%" class="content" data-role="content">
         <h2 width="50%">
-            <button class="lampknapp" id="1" value="off" height="80%">Fönsterlampor av</button>
-            <button width="40%" class="lampknapp" id="1" value="on">Fönsterlampor på</button>
+            <button class="lampknapp" id="DarkLamp" value="off" height="80%">FÃ¶nsterlampor av</button>
+            <button width="40%" class="lampknapp" id="DarkLamp" value="on">FÃ¶nsterlampor pÃ¥</button>
         </h2>
         <h2 width="50%">
-            <button class="lampknapp" id="2" value="off">Motorärmare av</button><button class="lampknapp" id="2" value="on">Motorv%C3%A4rmare på</button>
+            <button class="lampknapp" id="EngineHeater" value="off">MotorvÃ¤rmare av</button><button class="lampknapp" id="EngineHeater" value="on">Motorv%C3%A4rmare pÃ¥</button>
         </h2>
         <h2 width="50%">
-            <button class="lampknapp" id="3" value="off">Barnlampor av</button><button class="lampknapp" id="3" value="on">Barnlampor på</button>
+            <button class="lampknapp" id="NightLamp" value="off">Barnlampor av</button><button class="lampknapp" id="NightLamp" value="on">Barnlampor pÃ¥</button>
         </h2>
         <h2 width="50%">
-            <button class="lampknapp" id="5" value="off">Garage av</button><button class="lampknapp" id="5" value="on">Garage på</button>
+            <button class="lampknapp" id="5" value="off">Garage av</button><button class="lampknapp" id="5" value="on">Garage pÃ¥</button>
         </h2>
     </div>
     </body>
@@ -98,8 +98,8 @@ def on():
 
 @app.route('/off/<nexa_id>')
 def off(nexa_id):
-
-    return 'Switching off %s' % nexa_id
+    CalComm.off(nexa_id)
+    return 'Switched off %s' % nexa_id
 
 @app.route('/init')
 def init():

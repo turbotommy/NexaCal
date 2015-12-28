@@ -10,7 +10,7 @@ from oauth2client.client import SignedJwtAssertionCredentials, AccessTokenRefres
 
 #from httplib2 import Http
 
-logging.config.fileConfig('logging.conf')
+#logging.config.fileConfig('logging.conf')
 #logging.basicConfig(filename='NexaCal.log',level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
@@ -218,21 +218,24 @@ class NexaCalWorker:
 
       except sqlite3.IntegrityError as sqlIE:
         #print "I/O error({0}): {1}".format(e.errno, e.strerror)
-        logger.debug(sqlIE.message)
+        logger.error(sqlIE.message)
       except Error:
-        print Error.message()
+        logger.error(Error.message())
         # The AccessTokenRefreshError exception is raised if the credentials
         # have been revoked by the user or they have expired.
-        print ('The credentials have been revoked or expired, please re-run'
+        logger.error('The credentials have been revoked or expired, please re-run'
                'the application to re-authorize')
 
-        print "Hello"
+        logger.error("Hello...")
 
       # except Exception:
       # print Exception.message
 
       db.commit()
       db.close()
+
+    #TODO: Do not update if event has passed.
+    #TODO: Create cron for next event
 
     def getbookings(self, init):
       global syncToken
@@ -262,6 +265,7 @@ class NexaCalWorker:
               status=event['status']
               schemadescr=''
 
+              #TODO: Investigate this
               if eventId == u'74c6v4i5ckc854ik5u6fg79ikk_20161231T200000Z':
                   print 'TODO Found!'
               if(status=='cancelled'):
@@ -411,11 +415,18 @@ class NexaCalWorker:
 
         #cursor.execute("UPDATE NexaControl SET status=1000 where status=979")
         retMsg+="\r\nUpdated " + str(cursor.rowcount) + " rows"
-        logger.debug(retMsg + ", updates to 1000")
+        logger.debug("Finished")
         db.commit()
         db.close()
 
         return retMsg
+
+    def off(self,name):
+        tldev=tlds.devs.get(name)
+        tlds.turn_off(tldev)
+
+
+
 
 #1	DarkLamp	OFF
 #2	EngineHeater	OFF
