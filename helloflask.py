@@ -73,14 +73,15 @@ def index():
             <button class="lampknapp" id="NightLamp" value="off">Barnlampor av</button><button class="lampknapp" id="NightLamp" value="on">Barnlampor på</button>
         </h2>
         <h2 width="50%">
-            <button class="lampknapp" id="5" value="off">Garage av</button><button class="lampknapp" id="5" value="on">Garage på</button>
+            <button class="lampknapp" id="GarageLamp" value="off">Garage av</button><button class="lampknapp" id="GarageLamp" value="on">Garage på</button>
         </h2>
     </div>
     </body>
     '''
-@app.route('/test')
-def test():
-    return '''Cool'''
+@app.route('/lab')
+def lab():
+    CalComm.lab()
+    return '''Ready'''
 
 @app.before_request
 def log_request():

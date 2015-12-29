@@ -405,11 +405,11 @@ class NexaCalWorker:
                 change=curDev[1]
                 if(change=='off'):
                     logger.debug("Setting "+name+" to off")
-                    tlds.turn_off(tldev)
+                    tlds.turn_off(tldev, force=True)
                     par=(2,name)
                 if(change=='on'):
                     logger.debug("Setting "+name+" to on")
-                    tlds.turn_on(tldev)
+                    tlds.turn_on(tldev, force=True)
                     par=(1,name)
                 cursor.execute("UPDATE NexaControl SET status=? where status=979 and name=?",par)
 
@@ -423,10 +423,14 @@ class NexaCalWorker:
 
     def off(self,name):
         tldev=tlds.devs.get(name)
-        tlds.turn_off(tldev)
+        tlds.turn_off(tldev,force=True)
 
+    def off(self,name):
+        tldev=tlds.devs.get(name)
+        tlds.turn_off(tldev,force=True)
 
-
+    def lab(self):
+        tlds.lab()
 
 #1	DarkLamp	OFF
 #2	EngineHeater	OFF

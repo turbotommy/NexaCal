@@ -74,10 +74,10 @@ class TelldusCtrl:
     for dev in cdevs:
         devs[dev.name]=dev
 
-    def turn_on(self, dev):
+    def turn_on(self, dev, force=False):
         name=dev.name
         try:
-            if(dev.last_sent_command(-1)==const.TELLSTICK_TURNON):
+            if(force==False and dev.last_sent_command(-1)==const.TELLSTICK_TURNON):
                 logger.info(name + " already on")
             else:
                 logger.info("Turns on " +name+ ", id="+str(dev.id))
@@ -85,10 +85,10 @@ class TelldusCtrl:
         except td.TelldusError as e:
             logger.error(e)
 
-    def turn_off(self, dev):
+    def turn_off(self, dev, force=False):
         name=dev.name
         try:
-            if(dev.last_sent_command(-1)==const.TELLSTICK_TURNOFF):
+            if(force==False and dev.last_sent_command(-1)==const.TELLSTICK_TURNOFF):
                 logger.info(name + " already off")
             else:
                 logger.info("Turns off " +name+ ", id="+str(dev.id))
@@ -96,10 +96,11 @@ class TelldusCtrl:
         except td.TelldusError as e:
             logger.error(e)
 
-    def notused(self):
+    def lab(self):
         try:
             devices=core.devices()
             dev=devices[0]
+            logger.info(dev.last_sent_command(-1))
             logger.info(dev.name)
             logger.info(dev.turn_on())
             logger.info(dev.turn_off())
