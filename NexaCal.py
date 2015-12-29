@@ -425,9 +425,9 @@ class NexaCalWorker:
         tldev=tlds.devs.get(name)
         tlds.turn_off(tldev,force=True)
 
-    def off(self,name):
+    def on(self,name):
         tldev=tlds.devs.get(name)
-        tlds.turn_off(tldev,force=True)
+        tlds.turn_on(tldev,force=True)
 
     def lab(self):
         tlds.lab()
