@@ -93,9 +93,10 @@ def log_request():
         # print request.headers
         # open(current_app.config['REQUEST_LOG_FILE'], 'w').write('...')
 
-@app.route('/on')
-def on():
-    return '''Switching on'''
+@app.route('/on/<nexa_id>')
+def on(nexa_id):
+    CalComm.on(nexa_id)
+    return 'Switched on %s' % nexa_id
 
 @app.route('/off/<nexa_id>')
 def off(nexa_id):
