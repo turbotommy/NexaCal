@@ -59,7 +59,7 @@ def index():
         </script>
     </head>
     <body>
-    <title>Misteln13</title>
+    <title>Misteln 13</title>
     <h1 width="50%">Kontrollpanel</h1>
     <div width="50%" class="content" data-role="content">
         <h2 width="50%">
@@ -67,7 +67,7 @@ def index():
             <button width="40%" class="lampknapp" id="DarkLamp" value="on">Fönsterlampor på</button>
         </h2>
         <h2 width="50%">
-            <button class="lampknapp" id="EngineHeater" value="off">Motorvärmare av</button><button class="lampknapp" id="EngineHeater" value="on">Motorv%C3%A4rmare på</button>
+            <button class="lampknapp" id="EngineHeater" value="off">Motorvärmare av</button><button class="lampknapp" id="EngineHeater" value="on">Motorvärmare på</button>
         </h2>
         <h2 width="50%">
             <button class="lampknapp" id="NightLamp" value="off">Barnlampor av</button><button class="lampknapp" id="NightLamp" value="on">Barnlampor på</button>

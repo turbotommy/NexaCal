@@ -28,7 +28,6 @@ class NexaCalWorker:
 
     syncToken=''
 
-
     logger.debug("Reads Config")
     #Read config
     with open("NexaCal.cfg") as f:
@@ -248,6 +247,7 @@ class NexaCalWorker:
       try:
 
         request=self.callGoogleCalendar(calId, init)
+        eventId=''
 
         while request != None:
           # Get the next page.
@@ -339,6 +339,7 @@ class NexaCalWorker:
 
         cursor.execute('''UPDATE CalConfig SET value=? where key=?''',(response['nextSyncToken'],'nextSyncToken'))
       except Exception as e:
+        logger.error('EventId:' + eventId)
         logger.error(e.message)
         # The AccessTokenRefreshError exception is raised if the credentials
         # have been revoked by the user or they have expired.
@@ -412,6 +413,8 @@ class NexaCalWorker:
                     tlds.turn_on(tldev, force=True)
                     par=(1,name)
                 cursor.execute("UPDATE NexaControl SET status=? where status=979 and name=?",par)
+                #Sleep 30 seconds not to confuse telldus
+                time.sleep(30)
 
         #cursor.execute("UPDATE NexaControl SET status=1000 where status=979")
         retMsg+="\r\nUpdated " + str(cursor.rowcount) + " rows"
