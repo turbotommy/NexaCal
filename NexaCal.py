@@ -239,6 +239,7 @@ class NexaCalWorker:
     def getbookings(self, init):
       global syncToken
       retMsg='Ok'
+      eventId=''
 
       db = self.get_conn()
 
@@ -247,7 +248,6 @@ class NexaCalWorker:
       try:
 
         request=self.callGoogleCalendar(calId, init)
-        eventId=''
 
         while request != None:
           # Get the next page.
