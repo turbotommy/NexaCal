@@ -82,7 +82,7 @@ class NexaCalWorker:
 
         return
 
-    def callGoogleCalendar(self, calendarId, init):
+    def callGoogleCalendar(self, calendarId, start_time=0, end_time=0):
         """
 
         :rtype : instancemethod
@@ -90,24 +90,16 @@ class NexaCalWorker:
         global syncToken
         global service
 
+
+        start_time=self.epochtodatetime(start_time)
+        end_time=self.epochtodatetime(end_time)
+
         service = build(serviceName='calendar', version='v3', http=self.http)
 
         request=''
         db = sqlite3.connect('nexa.db')
 
         try:
-            # get the next 12 hours of events
-            epoch_time = time.time()
-            start_time = epoch_time - 3600  # 1 hour ago
-            end_time = epoch_time + 30 * 24 * 3600  # 3 days in the future
-            tz_offset = - time.altzone / 3600
-            if tz_offset < 0:
-                tz_offset_str = "-%02d00" % abs(tz_offset)
-            else:
-                tz_offset_str = "+%02d00" % abs(tz_offset)
-            start_time = datetime.datetime.fromtimestamp(start_time).strftime("%Y-%m-%dT%H:%M:%S") + tz_offset_str
-            end_time = datetime.datetime.fromtimestamp(end_time).strftime("%Y-%m-%dT%H:%M:%S") + tz_offset_str
-
             if(syncToken==''):
                 logger.info("Getting calendar events between: " + start_time + " and " + end_time)
 
@@ -116,12 +108,12 @@ class NexaCalWorker:
                 # request object. The arguments provided are:
                 #   primary calendar for user
                 request = service.events().list(calendarId=calendarId,
-                                                     timeMin=start_time,
-                                                     timeMax=end_time,
-    #                                                 pageToken='EjYKKzVjYzE4YmFuYTM1a3JpdG03dnNvZnNtNjQ4XzIwMTUwOTIyVDE0MDAwMFoYgIDTuIGLyAI=',
-                                                     #orderBy='startTime',
-                                                     maxResults=100,
-                                                     singleEvents=True)
+                                                timeMin=start_time,
+                                                timeMax=end_time,
+                                                #                                                 pageToken='EjYKKzVjYzE4YmFuYTM1a3JpdG03dnNvZnNtNjQ4XzIwMTUwOTIyVDE0MDAwMFoYgIDTuIGLyAI=',
+                                                #orderBy='startTime',
+                                                maxResults=100,
+                                                singleEvents=True)
             else:
                 logger.info("Getting updated calendar events")
 
@@ -130,19 +122,19 @@ class NexaCalWorker:
                 # request object. The arguments provided are:
                 #   primary calendar for user
                 request = service.events().list(calendarId=calendarId,
-                                                     #timeMin='2015-05-06T04:30:00.000Z',
-                                                     #timeMax='2015-05-15T14:00:00.000Z',
-    #                                                 pageToken='EjYKKzVjYzE4YmFuYTM1a3JpdG03dnNvZnNtNjQ4XzIwMTUwOTIyVDE0MDAwMFoYgIDTuIGLyAI=',
-                                                     #orderBy='startTime',
-                                                     maxResults=100,
-                                                     syncToken=syncToken,
-                                                     singleEvents=True)
+                                                #timeMin='2015-05-06T04:30:00.000Z',
+                                                #timeMax='2015-05-15T14:00:00.000Z',
+                                                #                                                 pageToken='EjYKKzVjYzE4YmFuYTM1a3JpdG03dnNvZnNtNjQ4XzIwMTUwOTIyVDE0MDAwMFoYgIDTuIGLyAI=',
+                                                #orderBy='startTime',
+                                                maxResults=100,
+                                                syncToken=syncToken,
+                                                singleEvents=True)
 
-            #request = self.service.events().list(calendarId=calendarId,
-            #                                     timeMin=start_time,
-            #                                     timeMax=end_time,
-                                                 #updatedMin='2015-05-08T00:00:00.000Z',
-            #                                     singleEvents=True)
+                #request = self.service.events().list(calendarId=calendarId,
+                #                                     timeMin=start_time,
+                #                                     timeMax=end_time,
+                #updatedMin='2015-05-08T00:00:00.000Z',
+                #                                     singleEvents=True)
         except Error:
             logger.error(Error.message())
             # The AccessTokenRefreshError exception is raised if the credentials
@@ -164,195 +156,235 @@ class NexaCalWorker:
 
         return tz_offset_str
 
-    def getsunrisenset(self):
-      try:
-        db = self.get_conn()
+    def getsunrisenset(self,start_time, end_time):
+        try:
+            db = self.get_conn()
 
-        cursor=db.cursor()
+            cursor=db.cursor()
 
-      #db = sqlite3.connect('/home/tommy/nexa.db')
-        request=self.callGoogleCalendar('i_78.69.212.216#sunrise@group.v.calendar.google.com')
-        #request = self.service.events().list(calendarId='i_78.69.212.216#sunrise@group.v.calendar.google.com',
-        #                                         timeMin=u'2015-04-26T20:54:26+0200',
-        #                                         timeMax=u'2015-04-27T20:54:26+0200',
-        #                                         singleEvents=True)
-        tzUTC=tz.gettz('UTC')
+            #db = sqlite3.connect('/home/tommy/nexa.db')
+            request=self.callGoogleCalendar('i_78.69.212.216#sunrise@group.v.calendar.google.com', start_time, end_time)
+            #request = self.service.events().list(calendarId='i_78.69.212.216#sunrise@group.v.calendar.google.com',
+            #                                         timeMin=u'2015-04-26T20:54:26+0200',
+            #                                         timeMax=u'2015-04-27T20:54:26+0200',
+            #                                         singleEvents=True)
+            tzUTC=tz.gettz('UTC')
 
-        # Loop until all pages have been processed.
-        while request != None:
-          # Get the next page.
-          response = request.execute()
-          # Accessing the response like a dict object with an 'items' key
-          # returns a list of item objects (events).
-          logger.debug("Response: ")
-          logger.debug(response)
-          for event in response.get('items'):
-            # The event object is a dict object with a 'summary' key.
+            # Loop until all pages have been processed.
+            while request != None:
+                # Get the next page.
+                response = request.execute()
+                # Accessing the response like a dict object with an 'items' key
+                # returns a list of item objects (events).
+                logger.debug("Response: ")
+                logger.debug(response)
+                for event in response.get('items'):
+                    # The event object is a dict object with a 'summary' key.
 
-            # Insert info about event
-            summary=event.get('summary', 'Tomt')
-            sunDate=event.get('start', 'Tomt')
-            sunDate=sunDate.get('date')+' '
+                    # Insert info about event
+                    summary=event.get('summary', 'Tomt')
+                    sunDate=event.get('start', 'Tomt')
+                    sunDate=sunDate.get('date')+' '
 
-            logger.info(summary)
-            tmpList=summary.split(",")
+                    logger.info(summary)
+                    tmpList=summary.split(",")
 
-            tsfrom=parser.parse(sunDate+tmpList[0][-7:])
-            tsfrom=tsfrom.replace(tzinfo=tzUTC)
-            tsfrom=tsfrom.astimezone(tzlocal)
+                    tsfrom=parser.parse(sunDate+tmpList[0][-7:])
+                    tsfrom=tsfrom.replace(tzinfo=tzUTC)
+                    tsfrom=tsfrom.astimezone(tzlocal)
 
-            tsto=parser.parse(sunDate+tmpList[1][-7:])
-            tsto=tsto.replace(tzinfo=tzUTC)
-            tsto=tsto.astimezone(tzlocal)
+                    tsto=parser.parse(sunDate+tmpList[1][-7:])
+                    tsto=tsto.replace(tzinfo=tzUTC)
+                    tsto=tsto.astimezone(tzlocal)
 
-            rc=cursor.execute('''INSERT INTO suntimes(up, down)
+                    rc=cursor.execute('''INSERT INTO suntimes(up, down)
                               VALUES(?,?)''', (tsfrom, tsto))
-            db.commit()
-            logger.info('First user inserted')
-          # print repr(event.get('summary', 'NO SUMMARY')) + '\n'
-          # Get the next request object by passing the previous request object to
-          # the list_next method.
-          #select up from suntimes where date(up) = date('now');
-          request = self.service.events().list_next(request, response)
+                    db.commit()
+                    logger.info('First user inserted')
+                # print repr(event.get('summary', 'NO SUMMARY')) + '\n'
+                # Get the next request object by passing the previous request object to
+                # the list_next method.
+                #select up from suntimes where date(up) = date('now');
+                #request = self.service.events().list_next(request, response)
 
-      except sqlite3.IntegrityError as sqlIE:
-        #print "I/O error({0}): {1}".format(e.errno, e.strerror)
-        logger.error(sqlIE.message)
-      except Error:
-        logger.error(Error.message())
-        # The AccessTokenRefreshError exception is raised if the credentials
-        # have been revoked by the user or they have expired.
-        logger.error('The credentials have been revoked or expired, please re-run'
-               'the application to re-authorize')
+        except sqlite3.IntegrityError as sqlIE:
+            #print "I/O error({0}): {1}".format(e.errno, e.strerror)
+            logger.error(sqlIE.message)
+        except Error:
+            logger.error(Error.message())
+            # The AccessTokenRefreshError exception is raised if the credentials
+            # have been revoked by the user or they have expired.
+            logger.error('The credentials have been revoked or expired, please re-run'
+                         'the application to re-authorize')
 
-        logger.error("Hello...")
+            logger.error("Hello...")
 
-      # except Exception:
-      # print Exception.message
+        # except Exception:
+        # print Exception.message
 
-      db.commit()
-      db.close()
+        db.commit()
+        db.close()
 
     #TODO: Do not update if event has passed.
     #TODO: Create cron for next event
 
+    def archive(self):
+        db = self.get_conn()
+        cursor=db.cursor()
+
+        #Get latest date for sunrises
+        cursor.execute("SELECT max(up) FROM suntimes")
+
+        tslatest = cursor.fetchone()[0]
+        epochlatest = self.dbtimetoepoch(tslatest)
+
+        nrdays=(time.time()-epochlatest)/3600/24
+
+        logger.info(nrdays)
+
+        if nrdays>30:
+            self.getsunrisenset(epochlatest+3600*24, epochlatest+60*3600*24)
+
+    def dbtimetoepoch(self, strtime):
+        dbtime=time.strptime(strtime[:19], "%Y-%m-%d %H:%M:%S")
+        return time.mktime(dbtime)
+
+
+    def epochtodatetime(self,epoch):
+        tz_offset = - time.altzone / 3600
+        if tz_offset < 0:
+            tz_offset_str = "-%02d00" % abs(tz_offset)
+        else:
+            tz_offset_str = "+%02d00" % abs(tz_offset)
+        return datetime.datetime.fromtimestamp(epoch).strftime("%Y-%m-%dT%H:%M:%S") + tz_offset_str
+
     def getbookings(self, init):
-      global syncToken
-      retMsg='Ok'
-      eventId=''
+        global syncToken
+        retMsg='Ok'
+        eventId=''
 
-      db = self.get_conn()
+        db = self.get_conn()
+        cursor=db.cursor()
 
-      cursor=db.cursor()
+        self.archive()
 
-      try:
+        try:
+            epoch_time = time.time()
+            start_time = epoch_time - 3600  # 1 hour ago
+            end_time = epoch_time + 3 * 24 * 3600  # 3 days in the future
 
-        request=self.callGoogleCalendar(calId, init)
+            request=self.callGoogleCalendar(calId, start_time, end_time)
 
-        while request != None:
-          # Get the next page.
-          response = request.execute()
-          logger.debug("Calresponse:")
-          logger.debug(response)
-          # Accessing the response like a dict object with an 'items' key
-          # returns a list of item objects (events).
-          s=0
-          for event in response.get('items'):
-              # The event object is a dict object with a 'summary' key.
+            while request != None:
+                # Get the next page.
+                response = request.execute()
+                logger.debug("Calresponse:")
+                logger.debug(response)
+                # Accessing the response like a dict object with an 'items' key
+                # returns a list of item objects (events).
+                s=0
+                for event in response.get('items'):
+                    # The event object is a dict object with a 'summary' key.
 
-              # Insert info about event
-              eventId=event['id']
-              status=event['status']
-              schemadescr=''
+                    # Insert info about event
+                    eventId=event['id']
+                    status=event['status']
+                    schemadescr=''
 
-              #TODO: Investigate this
-              if eventId == u'74c6v4i5ckc854ik5u6fg79ikk_20161231T200000Z':
-                  print 'TODO Found!'
-              if(status=='cancelled'):
-                  par=(eventId,)
-                  cursor.execute("DELETE from NexaPlugins where eventId=?", par)
-                  cursor.execute('''DELETE from NexaControl where eventId=?''', par)
-              else:
-                  try:
-                      summary=event.get('summary', 'Tomt')
+                    #TODO: Investigate this
+                    if eventId == u'74c6v4i5ckc854ik5u6fg79ikk_20161231T200000Z':
+                        print 'TODO Found!'
+                    if(status=='cancelled'):
+                        par=(eventId,)
+                        cursor.execute("DELETE from NexaPlugins where eventId=?", par)
+                        cursor.execute('''DELETE from NexaControl where eventId=?''', par)
+                    else:
+                        try:
+                            summary=event.get('summary', 'Tomt')
 
-                      tsfrom=event.get('start', 'Tomt')
-                      tsfrom=tsfrom.get('dateTime') #QUE: What if it is not dateTime?
-                      tsfrom=parser.parse(tsfrom)
+                            tsfrom=event.get('start', 'Tomt')
+                            tsfrom=tsfrom.get('dateTime') #QUE: What if it is not dateTime?
+                            tsfrom=parser.parse(tsfrom)
 
-                      tsto=event['end']
-                      tsto=tsto['dateTime']
-                      tsto=parser.parse(tsto)
+                            tsto=event['end']
+                            tsto=tsto['dateTime']
+                            tsto=parser.parse(tsto)
 
-                      updated=event.get('updated', 'Tomt')
+                            updated=event.get('updated', 'Tomt')
 
-                      #Check for plugins in description field
-                      schemadescr=event.get('location')
-                      if schemadescr!=None:
-                          plugins=schemadescr.split(';')
+                            #Check for plugins in description field
+                            schemadescr=event.get('location')
+                            if schemadescr!=None:
+                                plugins=schemadescr.split(';')
 
-                          s=s+1
-                          #print summary + s.__str__()
-#                          if(s==70):
-#                            print("Break" + summary)
-                          for pluginrow in plugins:
-                              schemaPlugin=SchemaPlugin.SchemaPluginFactory(pluginrow)
+                                s=s+1
+                                #print summary + s.__str__()
+                                #                          if(s==70):
+                                #                            print("Break" + summary)
+                                for pluginrow in plugins:
+                                    schemaPlugin=SchemaPlugin.SchemaPluginFactory(pluginrow)
 
-                              if(schemaPlugin==None):
-                                  logger.warning('Cannot handle pluginrow '+pluginrow)
-                              else:
-                                  schemaPlugin.storeInDB(cursor, eventId)
-                                  if(schemaPlugin.eventType=='On'):
-                                      tsfrom=schemaPlugin.calcPluginTime(tsfrom)
-                                  elif(schemaPlugin.eventType=='Off'):
-                                      tsto=schemaPlugin.calcPluginTime(tsto)
+                                    if(schemaPlugin==None):
+                                        logger.warning('Cannot handle pluginrow '+pluginrow)
+                                    else:
+                                        schemaPlugin.storeInDB(cursor, eventId)
+                                        if(schemaPlugin.eventType=='On'):
+                                            tstmp=schemaPlugin.calcPluginTime(tsfrom)
+                                            if tstmp==None:
+                                                logger.info("No tsfrom date received, time for maintenance?")
+                                            tsfrom=tstmp
+                                        elif(schemaPlugin.eventType=='Off'):
+                                            tstmp=schemaPlugin.calcPluginTime(tsto)
+                                            if tstmp==None:
+                                                logger.info("No tsto date received, time for maintenance?")
+                                            tsto=tstmp
 
-                  except KeyError as e:
-                      if (e.message.startswith("description")):
-                          schemadescr=''
-                      else:
-                          retMsg=e.message + " is empty!"
-                  for x in range(0, 10):
-                      try:
-                          cursor.execute("INSERT OR REPLACE INTO NexaControl(eventId, name, updated, tsfrom, tsto, plugin) VALUES(?,?,?,?,?,?)", (eventId, summary,updated,tsfrom,tsto,schemadescr))
-                      except Exception as e:
-                          logger.warning("Could not insert into NexaControl:" +e.message+ ", retry "+str(10-x))
-                          time.sleep(1)
-                          pass
-                      finally:
-                          break
-                  else:
-                      cursor.execute("INSERT OR REPLACE INTO NexaControl(eventId, name, updated, tsfrom, tsto, plugin) VALUES(?,?,?,?,?,?)", (eventId, summary,updated,tsfrom,tsto,schemadescr))
+                        except KeyError as e:
+                            if (e.message.startswith("description")):
+                                schemadescr=''
+                            else:
+                                retMsg=e.message + " is empty!"
+                        for x in range(0, 10):
+                            try:
+                                cursor.execute("INSERT OR REPLACE INTO NexaControl(eventId, name, updated, tsfrom, tsto, plugin) VALUES(?,?,?,?,?,?)", (eventId, summary,updated,tsfrom,tsto,schemadescr))
+                            except Exception as e:
+                                logger.warning("Could not insert into NexaControl:" +e.message+ ", retry "+str(10-x))
+                                time.sleep(1)
+                                pass
+                            finally:
+                                break
+                        else:
+                            cursor.execute("INSERT OR REPLACE INTO NexaControl(eventId, name, updated, tsfrom, tsto, plugin) VALUES(?,?,?,?,?,?)", (eventId, summary,updated,tsfrom,tsto,schemadescr))
 
-              logger.debug(event.get('summary', 'Tomt'))
-              logger.debug(event.get('start', 'Tomt'))
-              logger.debug(event.get('end', 'Tomt'))
-              logger.debug(event.get('updated', 'Tomt'))
-              #print repr(event.get('summary', 'NO SUMMARY')) + '\n'
-          # Get the next request object by passing the previous request object to
-          # the list_next method.
-          request = service.events().list_next(request, response)
+                    logger.debug(event.get('summary', 'Tomt'))
+                    logger.debug(event.get('start', 'Tomt'))
+                    logger.debug(event.get('end', 'Tomt'))
+                    logger.debug(event.get('updated', 'Tomt'))
+                    #print repr(event.get('summary', 'NO SUMMARY')) + '\n'
+                # Get the next request object by passing the previous request object to
+                # the list_next method.
+                request = service.events().list_next(request, response)
 
-        #Store nextSyncToken
-        syncToken=response['nextSyncToken']
-        print response['nextSyncToken']
+            #Store nextSyncToken
+            syncToken=response['nextSyncToken']
+            print response['nextSyncToken']
 
-        cursor.execute('''UPDATE CalConfig SET value=? where key=?''',(response['nextSyncToken'],'nextSyncToken'))
-      except Exception as e:
-        logger.error('EventId:' + eventId)
-        logger.error(e.message)
-        # The AccessTokenRefreshError exception is raised if the credentials
-        # have been revoked by the user or they have expired.
-        #print ('The credentials have been revoked or expired, please re-run'
-        #       'the application to re-authorize')
+            cursor.execute('''UPDATE CalConfig SET value=? where key=?''',(response['nextSyncToken'],'nextSyncToken'))
+        except Exception as e:
+            logger.error('EventId:' + eventId)
+            logger.error(e.message)
+            # The AccessTokenRefreshError exception is raised if the credentials
+            # have been revoked by the user or they have expired.
+            #print ('The credentials have been revoked or expired, please re-run'
+            #       'the application to re-authorize')
 
-#        db.close()
+        #        db.close()
 
 
-      db.commit()
-      db.close()
+        db.commit()
+        db.close()
 
-      return retMsg
+        return retMsg
 
     def fireTelldus(self):
         retMsg=''

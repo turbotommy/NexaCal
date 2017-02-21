@@ -113,7 +113,7 @@ def init():
         #CalComm.dbtest()
 
     #    CalComm.login()
-    #    CalComm.getsunrisenset()
+        CalComm.getsunrisenset()
         return CalComm.getbookings(1)
 
     except Exception as e:

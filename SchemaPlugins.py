@@ -141,6 +141,10 @@ class SunTimesPlugin(SchemaPlugin):
         self.cursor.execute(dbselect, (timeStamp,))
 
         stats = self.cursor.fetchone()
+        if stats==None:
+            #Time for some archiving and filling of tables. Return None to make it happen
+
+            return None
         sunTimeStamp=parser.parse(stats[0])
         if self.eventRule=='Latest' and sunTimeStamp<orgTimeStamp:
             sunTimeStamp=orgTimeStamp
