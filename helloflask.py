@@ -67,7 +67,7 @@ def index():
             <button width="40%" class="lampknapp" id="DarkLamp" value="on">Fönsterlampor på</button>
         </h2>
         <h2 width="50%">
-            <button class="lampknapp" id="EngineHeater" value="off">Motorvärmare av</button><button class="lampknapp" id="EngineHeater" value="on">Motorvärmare på</button>
+            <button width="50%" class="lampknapp" id="EngineHeater" value="off">Motorvärmare av</button><button class="lampknapp" id="EngineHeater" value="on">Motorvärmare på</button>
         </h2>
         <h2 width="50%">
             <button class="lampknapp" id="NightLamp" value="off">Barnlampor av</button><button class="lampknapp" id="NightLamp" value="on">Barnlampor på</button>

@@ -171,13 +171,13 @@ class NexaCalWorker:
             tzUTC=tz.gettz('UTC')
 
             # Loop until all pages have been processed.
-            while request != None:
+            if request != None:
                 # Get the next page.
                 response = request.execute()
                 # Accessing the response like a dict object with an 'items' key
                 # returns a list of item objects (events).
-                logger.debug("Response: ")
-                logger.debug(response)
+                #logger.debug("Response: ")
+                #logger.debug(response)
                 for event in response.get('items'):
                     # The event object is a dict object with a 'summary' key.
 
@@ -186,7 +186,6 @@ class NexaCalWorker:
                     sunDate=event.get('start', 'Tomt')
                     sunDate=sunDate.get('date')+' '
 
-                    logger.info(summary)
                     tmpList=summary.split(",")
 
                     tsfrom=parser.parse(sunDate+tmpList[0][-7:])
@@ -200,7 +199,8 @@ class NexaCalWorker:
                     rc=cursor.execute('''INSERT INTO suntimes(up, down)
                               VALUES(?,?)''', (tsfrom, tsto))
                     db.commit()
-                    logger.info('First user inserted')
+                    logger.info(sunDate + summary)
+                    #logger.info('Inserted suntimes for ' + str(tsto))
                 # print repr(event.get('summary', 'NO SUMMARY')) + '\n'
                 # Get the next request object by passing the previous request object to
                 # the list_next method.
@@ -231,19 +231,36 @@ class NexaCalWorker:
     def archive(self):
         db = self.get_conn()
         cursor=db.cursor()
+        daysoffset = 17
 
         #Get latest date for sunrises
         cursor.execute("SELECT max(up) FROM suntimes")
 
         tslatest = cursor.fetchone()[0]
-        epochlatest = self.dbtimetoepoch(tslatest)
+        if tslatest is None:
+            tslatest = self.epochtodatetime(time.time())
+            epochlatest = time.time()-2*3600*24
+        else:
+            epochlatest = self.dbtimetoepoch(tslatest)
 
-        nrdays=(time.time()-epochlatest)/3600/24
+        nrdays=(epochlatest-time.time())/3600/24
 
-        logger.info(nrdays)
-
-        if nrdays>30:
+        logger.info("Latest sunset:" + tslatest + ", " + str(nrdays-daysoffset) + " left until maintenance")
+        #Less than daysoffset days left of sunsets => maintenance
+        if nrdays<daysoffset:
             self.getsunrisenset(epochlatest+3600*24, epochlatest+60*3600*24)
+
+            deldate=self.epochtodatetime(epochlatest-60*3600*24)
+            par=(deldate,)
+
+            cursor.execute("delete from suntimes where up < ?", par)
+            logger.info(str(cursor.rowcount) + " rows deleted from suntimes")
+            cursor.execute("Delete from NexaPlugins where eventId in (select eventId from NexaControl where tsto < ?)", par)
+            logger.info(str(cursor.rowcount) + " rows deleted from NexaPlugins")
+            cursor.execute("DELETE from NexaControl where tsto < ?", par)
+            logger.info(str(cursor.rowcount) + " rows deleted from NexaControl")
+
+            db.commit()
 
     def dbtimetoepoch(self, strtime):
         dbtime=time.strptime(strtime[:19], "%Y-%m-%d %H:%M:%S")
@@ -271,7 +288,7 @@ class NexaCalWorker:
         try:
             epoch_time = time.time()
             start_time = epoch_time - 3600  # 1 hour ago
-            end_time = epoch_time + 3 * 24 * 3600  # 3 days in the future
+            end_time = epoch_time + 30 * 24 * 3600  # 3 days in the future
 
             request=self.callGoogleCalendar(calId, start_time, end_time)
 
